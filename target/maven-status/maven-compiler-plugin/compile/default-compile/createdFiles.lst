@@ -1,6 +1,0 @@
-com\modelevalplat\model\ModelEvaluationResult.class
-com\modelevalplat\service\impl\ModelServiceImpl.class
-com\modelevalplat\ModelEvalPlatApplication.class
-com\modelevalplat\controller\GlobalExceptionHandler.class
-com\modelevalplat\controller\ModelUploadController.class
-com\modelevalplat\service\ModelService.class
