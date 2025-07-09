@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>模型评估平台</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { margin-top: 30px; }
+        .upload-section, .result-section { border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 5px; }
+        #result { margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .file-input { margin: 10px 0; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>数字识别模型评估平台</h1>
+    <div class="container">
+        <div class="upload-section">
+            <h2>上传模型文件</h2>
+            <input type="file" id="modelFile" class="file-input" accept=".h5,.pb">
+            <button onclick="uploadModel()">上传模型</button>
+            <div id="uploadStatus"></div>
+        </div>
+
+        <div class="result-section">
+            <h2>评估结果</h2>
+            <button onclick="evaluateModel()">开始评估</button>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let modelPath = '';
+
+        function uploadModel() {
+            const fileInput = document.getElementById('modelFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请选择模型文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.text())
+              .then(data => {
+                  document.getElementById('uploadStatus').textContent = data;
+                  if (data.startsWith('模型上传成功')) {
+                      modelPath = data.split('：')[1];
+                  }
+              })
+              .catch(error => console.error('上传失败:', error));
+        }
+
+        function evaluateModel() {
+            if (!modelPath) {
+                alert('请先上传模型');
+                return;
+            }
+
+            fetch(`/api/evaluate?modelPath=${encodeURIComponent(modelPath)}`, {
+                method: 'POST'
+            }).then(response => response.json())
+              .then(data => {
+                  const resultDiv = document.getElementById('result');
+                  resultDiv.innerHTML = `
+                      <h3>评估详情</h3>
+                      <p>模型路径: ${data.modelPath}</p>
+                      <p>平均推理时间: ${data.inferenceTimeMs}ms</p>
+                      <p>输入形状: ${data.inputShape}</p>
+                      <p>准确率: ${(data.accuracy * 100).toFixed(2)}%</p>
+                      <p>状态: ${data.status}</p>
+                  `;
+              })
+              .catch(error => console.error('评估失败:', error));
+        }
+    </script>
+</body>
+</html>
