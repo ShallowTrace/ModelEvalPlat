@@ -1,4 +1,4 @@
-package com.ecode.ModelEvalPlat.controller;
+package com.ecode.modelevalplat.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

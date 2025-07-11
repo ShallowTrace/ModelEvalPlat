@@ -1,5 +1,4 @@
-package main.java.com.ecode.ModelEvalPlat;
-
+package com.ecode.modelevalplat;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

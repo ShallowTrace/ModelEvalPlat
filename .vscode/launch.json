@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "ModelEvalPlatApplication",
+            "request": "launch",
+            "mainClass": "com.ecode.modelevalplat.ModelEvalPlatApplication",
+            "projectName": "ModelEvalPlat"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ModelEvalPlatApplication<ModelEvalPlat_d35e5d4f>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "main.java.com.ecode.modelevalplat.ModelEvalPlatApplication",
+            "projectName": "ModelEvalPlat_d35e5d4f",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
