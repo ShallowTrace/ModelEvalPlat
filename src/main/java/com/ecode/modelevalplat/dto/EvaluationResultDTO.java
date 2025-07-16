@@ -1,5 +1,6 @@
-package com.ecode.modelevalplat.service.impl;
+package com.ecode.modelevalplat.dto;
 
-public class EvaluationResult {
-
+public class EvaluationResultDTO {
+    String metric;
+    Double value;
 }

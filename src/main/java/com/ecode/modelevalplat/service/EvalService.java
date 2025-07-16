@@ -26,9 +26,9 @@ public interface EvalService extends IService<EvaluationResultDO> {
     /**
      * 处理评估结果并保存
      * 
-     * @param result       评估结果
-     * @param submissionId 提交记录ID
+     * @param csvPath       评估结果CSV文件路径
+     * @param evaluationResultId 评估结果ID
      */
-    public void processEvaluationResult(EvaluationResultDTO result, Long submissionId);
+    public void processEvaluationResult(String csvPath, Long evaluationResultId);
 
 }
