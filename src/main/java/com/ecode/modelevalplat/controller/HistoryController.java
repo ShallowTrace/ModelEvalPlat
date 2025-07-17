@@ -3,7 +3,6 @@ package com.ecode.modelevalplat.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ecode.modelevalplat.dto.HistoryDTO;
 import com.ecode.modelevalplat.service.HistoryService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,5 +41,7 @@ public class HistoryController {
         Page<HistoryDTO> result = historyService.getHistoryByCompetition(
                 userId, competitionId, page, size);
         return ResponseEntity.ok(result);
+
+
     }
 }

@@ -27,4 +27,4 @@ public interface HistoryService extends IService<HistoryDTO> {
          */
         Page<HistoryDTO> getHistoryByCompetition(Long userId, Long competitionId, Integer pageNum, Integer pageSize);
     }
-}
+
