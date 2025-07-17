@@ -43,19 +43,7 @@
             <version>3.2.5</version>
         </dependency>
 
-        <!-- ONNX Runtime -->
-        <dependency>
-            <groupId>com.microsoft.onnxruntime</groupId>
-            <artifactId>onnxruntime</artifactId>
-            <version>1.10.0</version>
-        </dependency>
 
-        <!-- Py4J -->
-        <dependency>
-            <groupId>net.sf.py4j</groupId>
-            <artifactId>py4j</artifactId>
-            <version>0.10.9.5</version>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -80,11 +68,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-<!--            <version>1.7.36</version>-->
+
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+
             <version>1.2.11</version>
         </dependency>
         <dependency>
@@ -92,7 +81,14 @@
             <artifactId>opencsv</artifactId>
             <version>5.9</version>
         </dependency>
+  
+        </dependency>
 
+        <!-- Liquibase -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
 
     </dependencies>
     <build>

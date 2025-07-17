@@ -1,5 +1,3 @@
-# 文件上传配置
-
 # 模型文件保存路径
 model:
   upload:
@@ -9,18 +7,38 @@ server:
   port: 8002
 
 spring:
+
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+#   datasource:
+#     username: root
+#     password: 123456
+#     url: jdbc:mysql://127.0.0.1:3306/modeleval?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://127.0.0.1:3306/modeleval?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+    url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-test-query: select 1
       connection-timeout: 20000
       idle-timeout: 300000
       maximum-pool-size: 5
+
       minimum-idle: 5
+    servlet:
+      multipart:
+        max-file-size: 100MB
+        max-request-size: 100MB
+  liquibase:
+    change-log: classpath:liquibase/master.xml
+    enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
+    drop-first: false # 为 true 的话每次启动项目会删除所有数据库表
+# 默认的数据库名
+database:
+  name: model_eval_plat
+
