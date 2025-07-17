@@ -4,17 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="095dfb50-5608-49e8-b19c-800e9b18f1c3" name="更改" comment="">
+    <list default="true" id="095dfb50-5608-49e8-b19c-800e9b18f1c3" name="更改" comment="Merge branch 'main' into xujinjia&#10;&#10;# Conflicts:&#10;#&#9;.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]/ModelEvalPlatApplication.class&#10;#&#9;.vscode/settings.json&#10;#&#9;target/classes/application.properties">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/common/page/Page.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/controller/HistoryController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dao/mapper/HistoryMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dto/HistoryDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/service/HistoryService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/service/impl/HistoryServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/MarsCodeWorkspaceAppSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MarsCodeWorkspaceAppSettings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/ModelEvalPlatApplication.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/common/enums.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dao/mapper/EvaluationResultMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dao/mapper/EvaluationResultMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dto/EvaluationResultDTO.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/service/EvalService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/service/EvalService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/service/impl/EvalServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/service/impl/EvalServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dto/EvaluationResultDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/ecode/modelevalplat/dto/EvaluationResultDTO.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +23,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Interface" />
         <option value="Class" />
       </list>
     </option>
@@ -93,6 +93,19 @@
       <option name="presentableId" value="Default" />
       <updated>1752220464746</updated>
     </task>
+    <task id="LOCAL-00001" summary="Merge branch 'main' into xujinjia&#10;&#10;# Conflicts:&#10;#&#9;.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]/ModelEvalPlatApplication.class&#10;#&#9;.vscode/settings.json&#10;#&#9;target/classes/application.properties">
+      <option name="closed" value="true" />
+      <created>1752651731542</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1752651731542</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Merge branch 'main' into xujinjia&#10;&#10;# Conflicts:&#10;#&#9;.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]/ModelEvalPlatApplication.class&#10;#&#9;.vscode/settings.json&#10;#&#9;target/classes/application.properties" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge branch 'main' into xujinjia&#10;&#10;# Conflicts:&#10;#&#9;.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]/ModelEvalPlatApplication.class&#10;#&#9;.vscode/settings.json&#10;#&#9;target/classes/application.properties" />
   </component>
 </project>
