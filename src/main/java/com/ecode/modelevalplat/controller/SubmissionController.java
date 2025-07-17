@@ -17,17 +17,33 @@ public class SubmissionController {
     @Autowired
     private SubmissionService submissionService;
 
-    // 固定存储路径（可以根据需要修改）
-    private static final String FILE_STORAGE_PATH = "C:\\Users\\ShallowTrace\\Desktop\\submission\\";
 
     @GetMapping("/upload")
     public String showUploadForm() {
         return "<html>" +
                 "<body>" +
+                "<h3>选择提交类型：</h3>" +
                 "<form method=\"POST\" action=\"/api/submission/upload\" enctype=\"multipart/form-data\">" +
-                "选择文件: <input type=\"file\" name=\"file\" /><br/>" +
+                "<input type=\"radio' name='submitType' value='MODEL' checked> 模型提交（模型+脚本+环境）<br>" +
+                "<input type=\"radio' name='submitType' value='DOCKER'> Docker镜像提交<br>" +
+                "<div id='model-files'>" +
+                "模型文件: <input type=\"file\" name=\"modelFile\" /><br/>" +
+                "推理脚本: <input type=\"file\" name=\"scriptFile\" /><br/>" +
+                "环境配置: <input type=\"file\" name=\"envFile\" /><br/>" +
+                "</div>" +
+                "<div id='docker-file' style='display:none'>" +
+                "Docker镜像: <input type=\"file\" name=\"dockerFile\" /><br/>" +
+                "</div>" +
                 "<input type=\"submit\" value=\"提交\" />" +
                 "</form>" +
+                "<script>" +
+                "document.querySelectorAll('input[name=\"submitType\"]').forEach(radio => {" +
+                "  radio.addEventListener('change', (e) => {" +
+                "    document.getElementById('model-files').style.display = e.target.value === 'MODEL' ? 'block' : 'none';" +
+                "    document.getElementById('docker-file').style.display = e.target.value === 'DOCKER' ? 'block' : 'none';" +
+                "  })" +
+                "})" +
+                "</script>" +
                 "</body>" +
                 "</html>";
     }
@@ -39,19 +55,7 @@ public class SubmissionController {
         }
 
         try {
-            // 创建目标文件夹（如果不存在）
-            File storageDir = new File(FILE_STORAGE_PATH);
-            if (!storageDir.exists()) {
-                storageDir.mkdirs();
-            }
-
-            // 构建目标文件路径
-            File dest = new File(FILE_STORAGE_PATH + file.getOriginalFilename());
-
-            // 保存文件到指定路径
-            file.transferTo(dest);
-
-            return "文件上传成功：" + file.getOriginalFilename();
+            return submissionService.saveUploadedFile(file);
         } catch (IOException e) {
             e.printStackTrace();
             return "文件上传失败：" + e.getMessage();
