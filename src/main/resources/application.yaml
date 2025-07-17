@@ -1,0 +1,39 @@
+# 模型文件保存路径
+model:
+  upload:
+    path: c:/IDEAproject/ModelEvalPlat/uploads/
+# 数据库配置
+server:
+  port: 8002
+
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-test-query: select 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      maximum-pool-size: 5
+      minimum-idle: 5
+    servlet:
+      multipart:
+        max-file-size: 100MB
+        max-request-size: 100MB
+#  dynamic: # 动态数据源
+#    # primary: master # 这个表示默认的数据源，如果是注释状态，则表明使用上面的单数据源模式
+#    datasource:
+#      master:
+#        # 数据库名，从配置 database.name 中获取
+#        url: jdbc:mysql://localhost:3306/${database.name}?createDatabaseIfNotExist=true&useUnicode=true&allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+#        username: root
+#        password: 123456
+  liquibase:
+    change-log: classpath:liquibase/master.xml
+    enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
+    drop-first: false # 为 true 的话每次启动项目会删除所有数据库表
+# 默认的数据库名
+database:
+  name: model_eval_plat
