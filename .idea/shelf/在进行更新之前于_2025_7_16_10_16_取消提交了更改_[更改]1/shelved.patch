@@ -1,0 +1,157 @@
+Index: src/main/java/com/ecode/modelevalplat/service/impl/EvalServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/com/ecode/modelevalplat/service/impl/EvalServiceImpl.java b/src/main/java/com/ecode/modelevalplat/service/impl/EvalServiceImpl.java
+new file mode 100644
+--- /dev/null	(date 1752221258372)
++++ b/src/main/java/com/ecode/modelevalplat/service/impl/EvalServiceImpl.java	(date 1752221258372)
+@@ -0,0 +1,67 @@
++package com.ecode.modelevalplat.service.impl;
++
++import org.springframework.stereotype.Service;
++
++import com.ecode.modelevalplat.service.EvalService;
++
++import java.io.BufferedReader;
++import java.io.IOException;
++import java.io.InputStreamReader;
++import java.util.Map;
++
++@Service
++public class EvalServiceImpl implements EvalService {
++    @Override
++    public void runPythonModelTest(String modelPath, String testDataPath) {
++        try {
++            // 构建Python命令
++            ProcessBuilder pb = new ProcessBuilder(
++                "python",
++                "src/main/resources/model_test.py",
++                modelPath
++            );
++            
++            // 如果提供了测试数据路径，则添加为参数
++            if (testDataPath != null && !testDataPath.isEmpty()) {
++                pb.command().add(testDataPath);
++            }
++            
++            // 设置Python输出编码为UTF-8
++            Map<String, String> env = pb.environment();
++            env.put("PYTHONIOENCODING", "UTF-8");
++            env.put("PYTHONUTF8", "1");
++            
++            // 设置工作目录为项目根目录
++            pb.directory(new java.io.File(System.getProperty("user.dir")));
++            
++            // 启动进程
++            Process process = pb.start();
++            
++            // 读取Python输出（使用UTF-8编码）
++            BufferedReader reader = new BufferedReader(
++                new InputStreamReader(process.getInputStream(), "UTF-8")
++            );
++            String line;
++            System.out.println("模型测试结果:");
++            while ((line = reader.readLine()) != null) {
++                System.out.println(line);
++            }
++            
++            // 读取错误流（使用UTF-8编码）
++            BufferedReader errorReader = new BufferedReader(
++                new InputStreamReader(process.getErrorStream(), "UTF-8")
++            );
++            System.out.println("错误信息:");
++            while ((line = errorReader.readLine()) != null) {
++                System.err.println(line);
++            }
++            
++            // 等待进程完成并获取退出码
++            int exitCode = process.waitFor();
++            System.out.println("Python脚本执行完毕，退出码: " + exitCode);
++            
++        } catch (IOException | InterruptedException e) {
++            e.printStackTrace();
++        }
++    }
++}
+\ No newline at end of file
+Index: src/main/java/com/ecode/modelevalplat/ModelEvalPlatApplication.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/com/ecode/modelevalplat/ModelEvalPlatApplication.java b/src/main/java/com/ecode/modelevalplat/ModelEvalPlatApplication.java
+new file mode 100644
+--- /dev/null	(date 1752220904474)
++++ b/src/main/java/com/ecode/modelevalplat/ModelEvalPlatApplication.java	(date 1752220904474)
+@@ -0,0 +1,11 @@
++package com.ecode.modelevalplat;
++
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++@SpringBootApplication
++public class ModelEvalPlatApplication {
++    public static void main(String[] args) {
++        SpringApplication.run(ModelEvalPlatApplication.class, args);
++    }
++}
+\ No newline at end of file
+Index: src/main/java/com/ecode/modelevalplat/service/EvalService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/com/ecode/modelevalplat/service/EvalService.java b/src/main/java/com/ecode/modelevalplat/service/EvalService.java
+new file mode 100644
+--- /dev/null	(date 1752632144951)
++++ b/src/main/java/com/ecode/modelevalplat/service/EvalService.java	(date 1752632144951)
+@@ -0,0 +1,25 @@
++package com.ecode.modelevalplat.service;
++
++public interface EvalService {
++/**
++ * 根据提交ID获取模型存储路径
++ * @param submissionId 提交记录ID
++ * @return 模型文件路径
++ */
++public String getModelPath(Long submissionId);
++
++/**
++ * 运行Python模型测试
++ * @param modelPath    模型文件路径
++ * @param testDataPath 测试数据路径（可为null）
++ */
++public void evaluateModel(String modelPath, Long competitionId) ;
++
++/**
++ * 处理评估结果并保存
++ * @param result 评估结果
++ * @param submissionId 提交记录ID
++ */
++public void processEvaluationResult(EvaluationResult result, Long submissionId) ;
++
++}
+\ No newline at end of file
+Index: src/main/resources/application.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># æ\u0096\u0087ä»¶ä¸\u008Aä¼ é\u0085\u008Dç½®\r\nspring.servlet.multipart.max-file-size=100MB\r\nspring.servlet.multipart.max-request-size=100MB\r\n# æ¨¡å\u009E\u008Bæ\u0096\u0087ä»¶ä¿\u009Då\u00AD\u0098è·¯å¾\u0084\r\nmodel.upload.path=c:/IDEAproject/ModelEvalPlat/uploads/\r\n# æ\u0095°æ\u008D®åº\u0093é\u0085\u008Dç½®\r\nserver:\r\n  port: 8002\r\n\r\nspring:\r\n  datasource:\r\n    username: root\r\n    password: 123456\r\n    url: jdbc:mysql://127.0.0.1:3306/model_eval_plat?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull\r\n    driver-class-name: com.mysql.cj.jdbc.Driver\r\n    hikari:\r\n      connection-test-query: select 1\r\n      connection-timeout: 20000\r\n      idle-timeout: 300000\r\n      maximum-pool-size: 5\r\n      minimum-idle: 5
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+--- a/src/main/resources/application.properties	(revision 36e89b4f6740e810ed6782caa81b04407538b071)
++++ b/src/main/resources/application.properties	(date 1752221020040)
+@@ -11,7 +11,7 @@
+   datasource:
+     username: root
+     password: 123456
+-    url: jdbc:mysql://127.0.0.1:3306/model_eval_plat?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
++    url: jdbc:mysql://127.0.0.1:3306/modeleval?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+     driver-class-name: com.mysql.cj.jdbc.Driver
+     hikari:
+       connection-test-query: select 1
+diff --git a/src/main/java/com/ecode/modelevalplat/service/submissionservice.java b/src/main/java/com/ecode/modelevalplat/service/submissionservice.java
+deleted file mode 100644

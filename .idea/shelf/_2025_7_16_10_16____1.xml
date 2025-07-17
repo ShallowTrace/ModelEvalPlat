@@ -1,0 +1,17 @@
+<changelist name="在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]1" date="1752632202269" recycled="true" deleted="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]1/shelved.patch" />
+  <option name="DESCRIPTION" value="在进行更新之前于 2025/7/16 10:16 取消提交了更改 [更改]" />
+  <binary>
+    <option name="AFTER_PATH" value="target/classes/com/ecode/modelevalplat/service/impl/EvalServiceImpl.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]1/EvalServiceImpl.class" />
+  </binary>
+  <binary>
+    <option name="AFTER_PATH" value="target/classes/com/ecode/modelevalplat/service/EvalService.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]1/EvalService.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="target/classes/com/ecode/modelevalplat/ModelEvalPlatApplication.class" />
+    <option name="AFTER_PATH" value="target/classes/com/ecode/modelevalplat/ModelEvalPlatApplication.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/在进行更新之前于_2025_7_16_10_16_取消提交了更改_[更改]1/ModelEvalPlatApplication.class" />
+  </binary>
+</changelist>
