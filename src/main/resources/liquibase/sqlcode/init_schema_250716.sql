@@ -43,7 +43,7 @@ CREATE TABLE `submissions` (
     `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
     `competition_id` BIGINT UNSIGNED NOT NULL COMMENT '比赛ID',
     `model_path` VARCHAR(255) NOT NULL COMMENT '模型文件路径',
-    `status` ENUM('success', 'failed') NOT NULL COMMENT '评测状态',
+    `status` ENUM('pending', 'processing', 'success', 'failed') NOT NULL COMMENT '评测状态',
     `submit_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
     PRIMARY KEY (`id`),
     INDEX `idx_user_competition` (`user_id`, `competition_id`)

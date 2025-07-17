@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public interface SubmissionService {
     // 处理模型提交
-    SubmissionDO submitModel(Long userId, Long competitionId, MultipartFile file);
+    SubmissionDO submitModel(Long userId, Long competitionId, String submitType, MultipartFile file);
 
     // 获取用户提交历史（分页）
     Page<SubmissionDO> getUserSubmissions(Long userId, Long competitionId, Pageable pageable);

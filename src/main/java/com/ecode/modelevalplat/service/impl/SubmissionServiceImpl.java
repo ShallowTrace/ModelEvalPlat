@@ -3,6 +3,7 @@ package com.ecode.modelevalplat.service.impl;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import com.ecode.modelevalplat.service.SubmissionService;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,12 @@ import java.io.IOException;
 public class SubmissionServiceImpl implements SubmissionService {
 
     // 提交的文件使用固定存储路径（可以根据需要修改）
-    private static final String FILE_STORAGE_PATH = "C:\\Users\\ShallowTrace\\Desktop\\submission\\";
+    @Value("${MODELFILE_STORAGE_PATH}")
+    private String MODELFILE_STORAGE_PATH;
 
 
     @Override
-    public SubmissionDO submitModel(Long userId, Long competitionId, MultipartFile file) {
+    public SubmissionDO submitModel(Long userId, Long competitionId, String submitType, MultipartFile file) {
         return null;
     }
 
@@ -30,13 +32,13 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     public String saveUploadedFile(MultipartFile file) throws IOException {
-        File storageDir = new File(FILE_STORAGE_PATH);
+        File storageDir = new File(MODELFILE_STORAGE_PATH);
         if (!storageDir.exists()) {
             storageDir.mkdirs();
         }
 
         // 构建目标文件路径
-        File dest = new File(FILE_STORAGE_PATH + file.getOriginalFilename());
+        File dest = new File(MODELFILE_STORAGE_PATH + file.getOriginalFilename());
 
         // 保存文件到指定路径
         file.transferTo(dest);

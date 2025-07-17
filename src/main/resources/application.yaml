@@ -1,7 +1,5 @@
 # 模型文件保存路径
-model:
-  upload:
-    path: c:/IDEAproject/ModelEvalPlat/uploads/
+MODELFILE_STORAGE_PATH: C:\Users\ShallowTrace\Desktop\submission\
 # 数据库配置
 server:
   port: 8002
