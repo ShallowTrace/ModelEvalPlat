@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 @Slf4j
@@ -91,11 +92,17 @@ public class PlatDataSourceInitializer {
         }
 
         // 对于liquibase做数据版本管控的场景，若使用的不是默认的pai_coding，则需要进行修订
-        List<Map<String, Object>> record = jdbcTemplate.queryForList("select * from DATABASECHANGELOG where ID='00000000000020' limit 1;");
+        List<Map<String, Object>> record = jdbcTemplate.queryForList("select * from DATABASECHANGELOG where ID='00000000000001' limit 1;");
         if (CollectionUtils.isEmpty(record)) {
             // 首次启动，需要初始化库表，直接返回
             return true;
         }
+
+        // 非首次启动时，判断记录对应的md5是否准确
+//        if (Objects.equals(record.get(0).get("MD5SUM"), "8:a1a2d9943b746acf58476ae612c292fc")) {
+//            // 这里主要是为了解决 <a href="https://github.com/itwanger/paicoding/issues/71">#71</a> 这个问题
+//            jdbcTemplate.update("update DATABASECHANGELOG set MD5SUM='8:bb81b67a5219be64eff22e2929fed540' where ID='00000000000001'");
+//        }
         return false;
     }
 
