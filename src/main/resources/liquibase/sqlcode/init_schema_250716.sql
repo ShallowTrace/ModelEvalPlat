@@ -11,19 +11,23 @@ CREATE TABLE `users` (
 
 
 -- 比赛表
-CREATE TABLE `competitions` (
-    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '比赛ID',
-    `name` VARCHAR(100) NOT NULL COMMENT '比赛名称',
-    `description` TEXT COMMENT '比赛介绍',
-    `start_time` DATETIME NOT NULL COMMENT '开始时间',
-    `end_time` DATETIME NOT NULL COMMENT '结束时间',
-    `path` VARCHAR(255) COMMENT '测试数据路径',
-    `is_active` BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否激活',
-    `participant_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '报名人数',
-    `daily_submission_limit` INT NOT NULL DEFAULT 5 COMMENT '每日提交次数限制',
-    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='比赛信息表';
+create table competitions
+(
+    id                     bigint unsigned auto_increment comment '比赛ID'
+        primary key,
+    name                   varchar(100)                           not null comment '比赛名称',
+    description            text                                   null comment '比赛介绍',
+    start_time             datetime                               not null comment '开始时间',
+    end_time               datetime                               not null comment '结束时间',
+    path                   varchar(255)                           null comment '测试数据和结果路径（文件/URL）',
+    is_active              tinyint(1)   default 1                 not null comment '是否激活',
+    participant_count      int unsigned default '0'               not null comment '报名人数',
+    daily_submission_limit int          default 5                 not null comment '每日提交次数限制',
+    created_at             datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    constraint unique_competition_name
+        unique (name)
+)
+    comment '比赛信息表';
 
 
 -- 报名表
@@ -43,7 +47,7 @@ CREATE TABLE `submissions` (
     `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
     `competition_id` BIGINT UNSIGNED NOT NULL COMMENT '比赛ID',
     `model_path` VARCHAR(255) NOT NULL COMMENT '模型文件路径',
-    `status` ENUM('success', 'failed') NOT NULL COMMENT '评测状态',
+    `status` ENUM('PENDING', 'PROCESSING', 'SUCCESS', 'FAILED') NOT NULL COMMENT '评测状态',
     `submit_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
     PRIMARY KEY (`id`),
     INDEX `idx_user_competition` (`user_id`, `competition_id`)
