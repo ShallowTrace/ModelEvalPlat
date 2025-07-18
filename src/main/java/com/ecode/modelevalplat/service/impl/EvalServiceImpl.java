@@ -126,6 +126,37 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         return csvFilePath;
     }
 
+    private void installRequirements(String envName, String requirementFilePath) {
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                "conda", "run", "-n", envName, "pip", "install", "-r", requirementFilePath);
+        try {
+            Process process = processBuilder.start();
+            // 读取脚本输出（可选：记录日志）
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info("依赖安装输出: {}", line);
+                }
+            }
+            // 读取错误流（可选：捕获脚本错误）
+            try (BufferedReader errorReader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
+                String errorLine;
+                while ((errorLine = errorReader.readLine()) != null) {
+                    log.error("依赖安装错误: {}", errorLine);
+                }
+            }
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException("在 Conda 虚拟环境中安装依赖失败");
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("安装依赖时出错: " + e.getMessage(), e);
+        }
+    }
+
+
     @Override
 
     public void processEvaluationResult(String csvPath, Long evaluationResultId) {
