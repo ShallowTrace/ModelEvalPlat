@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/java/com/example/demo/
+/src/main/java/com/ecode/modelevalplat/demos/web/
+
+/src/main/resources/application.properties.bak
