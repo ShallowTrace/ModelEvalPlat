@@ -24,8 +24,8 @@ public class SubmissionController {
 
     @Autowired
     private SubmissionService submissionService;
-    
 
+    @ResponseBody
     @PostMapping("/{competitionId}/submissions")
     public SubmissionResp handleFileUpload(
             @PathVariable Long competitionId,

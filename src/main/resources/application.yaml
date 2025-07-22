@@ -32,3 +32,8 @@ spring:
 database:
   name: model_eval_plat
 
+mybatis-plus:
+  configuration:
+    #开启下划线转驼峰
+    map-underscore-to-camel-case: true
+
