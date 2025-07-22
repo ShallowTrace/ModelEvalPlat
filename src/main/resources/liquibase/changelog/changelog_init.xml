@@ -10,6 +10,9 @@
     <changeSet id="00000000000001" author="LiZhaoqi">
         <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/sqlcode/init_schema_250716.sql"/>
     </changeSet>
+    <changeSet id="00000000000002" author="CZY">
+        <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/sqlcode/init_competitions.sql"/>
+    </changeSet>
 
 <!--    <changeSet id="00000000000001" author="YiHui">-->
 <!--        <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/data/init_schema_221209.sql"/>-->
