@@ -2,7 +2,6 @@ package com.ecode.modelevalplat.service;
 
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
-import com.example.demo.entity.Competition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
