@@ -13,7 +13,7 @@ public class UserDO {
     private Long id;
     private String username;
     private String password;
-    private String role; // 实际应为枚举类型
+    private UserRole role; // 实际应为枚举类型
     private Date createdAt;
     private Date lastLoginAt;
 }
