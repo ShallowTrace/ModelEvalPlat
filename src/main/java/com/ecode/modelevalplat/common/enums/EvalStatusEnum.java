@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * 提交状态枚举类
  */
-public enum StatusEnum {
+public enum EvalStatusEnum {
     /**
      * 待处理
      */
@@ -36,7 +36,7 @@ public enum StatusEnum {
     @JsonValue
     private final String desc;
 
-    StatusEnum(int code, String desc) {
+    EvalStatusEnum(int code, String desc) {
         this.code = code;
         this.desc = desc;
     }
@@ -52,8 +52,8 @@ public enum StatusEnum {
     /**
      * 根据code获取枚举
      */
-    public static StatusEnum getByCode(int code) {
-        for (StatusEnum status : values()) {
+    public static EvalStatusEnum getByCode(int code) {
+        for (EvalStatusEnum status : values()) {
             if (status.code == code) {
                 return status;
             }
@@ -64,8 +64,8 @@ public enum StatusEnum {
     /**
      * 根据desc获取枚举
      */
-    public static StatusEnum getByDesc(String desc) {
-        for (StatusEnum status : values()) {
+    public static EvalStatusEnum getByDesc(String desc) {
+        for (EvalStatusEnum status : values()) {
             if (status.desc.equals(desc)) {
                 return status;
             }
