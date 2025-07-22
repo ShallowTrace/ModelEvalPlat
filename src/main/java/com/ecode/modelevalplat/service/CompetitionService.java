@@ -20,7 +20,7 @@ public class CompetitionService {
     }
 
     //管理员 新增比赛(发布比赛)
-    public int publishCompetition(Competition competition) {
+    public int publishCompetition(CompetitionDO competition) {
         return competitionMapper.insertCompetition(competition);
     }
 

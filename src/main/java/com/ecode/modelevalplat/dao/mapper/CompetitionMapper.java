@@ -2,7 +2,7 @@ package com.ecode.modelevalplat.dao.mapper;
 
 
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-import com.example.demo.entity.Competition;
+//import com.example.demo.entity.Competition;
 import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
@@ -31,7 +31,7 @@ public interface CompetitionMapper {
             "VALUES (#{name}, #{description}, #{startTime}, #{endTime}, #{path}, " +
             "#{isActive}, #{participantCount}, #{dailySubmissionLimit}, #{createdAt})")
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
-    int insertCompetition(Competition competition);
+    int insertCompetition(CompetitionDO competition);
 
     @Delete("DELETE FROM competitions WHERE id = #{id}")
     int deleteCompetition(Long id);

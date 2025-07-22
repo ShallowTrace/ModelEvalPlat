@@ -17,7 +17,7 @@
 package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-import com.example.demo.entity.Competition;
+//import com.example.demo.entity.Competition;
 import com.ecode.modelevalplat.service.CompetitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -41,7 +41,7 @@ public class CompetitionAdminController {
     // POST http://127.0.0.1:8080/api/competitions
     @PostMapping("/api/competitions")
     @ResponseBody
-    public int publishCompetition(@RequestBody Competition competition){
+    public int publishCompetition(@RequestBody CompetitionDO competition){
         return competitionService.publishCompetition(competition);
     }
 
