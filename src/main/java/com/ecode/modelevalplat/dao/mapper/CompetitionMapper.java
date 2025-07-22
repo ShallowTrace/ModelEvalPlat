@@ -2,34 +2,53 @@ package com.ecode.modelevalplat.dao.mapper;
 
 
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
+//import com.example.demo.entity.Competition;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
 public interface CompetitionMapper {
-    @Insert("INSERT INTO competitions(name, description, start_time, end_time, path, " +
+
+    @Select("SELECT * FROM competitions")
+    @Results(id = "competitionMap", value = {
+            @Result(property = "id", column = "id"),
+            @Result(property = "name", column = "name"),
+            @Result(property = "description", column = "description"),
+            @Result(property = "startTime", column = "start_time"),
+            @Result(property = "endTime", column = "end_time"),
+            @Result(property = "path", column = "path"),
+            @Result(property = "isActive", column = "is_active"),
+            @Result(property = "participantCount", column = "participant_count"),
+            @Result(property = "dailySubmissionLimit", column = "daily_submission_limit"),
+            @Result(property = "createdAt", column = "created_at")
+    })
+    List<CompetitionDO> selectAllCompetition();
+
+    @Insert("INSERT INTO competitions (name, description, start_time, end_time, path, " +
             "is_active, participant_count, daily_submission_limit, created_at) " +
-            "VALUES(#{name}, #{description}, #{startTime}, #{endTime}, #{path}, " +
+            "VALUES (#{name}, #{description}, #{startTime}, #{endTime}, #{path}, " +
             "#{isActive}, #{participantCount}, #{dailySubmissionLimit}, #{createdAt})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    void insert(CompetitionDO competition);
+    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+    int insertCompetition(CompetitionDO competition);
 
-    @Update("UPDATE competitions SET name=#{name}, description=#{description}, " +
-            "start_time=#{startTime}, end_time=#{endTime}, path=#{path}, " +
-            "is_active=#{isActive}, participant_count=#{participantCount}, " +
-            "daily_submission_limit=#{dailySubmissionLimit} WHERE id=#{id}")
-    void update(CompetitionDO competition);
+    @Delete("DELETE FROM competitions WHERE id = #{id}")
+    int deleteCompetition(Long id);
 
-    @Delete("DELETE FROM competitions WHERE id=#{id}")
-    void delete(Long id);
+    @Update("UPDATE competitions SET description = #{description} WHERE id = #{competitionId}")
+    int updateCompetitionDescription(@Param("competitionId") Long competitionId,
+                                     @Param("description") String description);
 
+    @Update("UPDATE competitions SET start_time = #{startTime} WHERE id = #{competitionId}")
+    int updateCompetitionStartTime(@Param("competitionId") Long competitionId,
+                                   @Param("startTime") LocalDateTime startTime);
+
+    @Update("UPDATE competitions SET end_time = #{endTime} WHERE id = #{competitionId}")
+    int updateCompetitionEndTime(@Param("competitionId") Long competitionId,
+                                 @Param("endTime") LocalDateTime endTime);
+    // 保留
     @Select("SELECT * FROM competitions WHERE id=#{id}")
     CompetitionDO findById(Long id);
 
-    @Select("SELECT * FROM competitions WHERE is_active = 1")
-    List<CompetitionDO> findActiveCompetitions();
-
-    @Select("SELECT * FROM competitions")
-    List<CompetitionDO> findAll();
 }
