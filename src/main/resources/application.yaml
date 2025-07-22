@@ -8,7 +8,7 @@ server:
 spring:
   datasource:
     username: root
-    password: 123456
+    password: 5881113jyl
     url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
 
     driver-class-name: com.mysql.cj.jdbc.Driver
