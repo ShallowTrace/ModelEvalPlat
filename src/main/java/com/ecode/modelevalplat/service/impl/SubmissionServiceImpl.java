@@ -1,6 +1,8 @@
 package com.ecode.modelevalplat.service.impl;
 
+import com.ecode.modelevalplat.common.ResVo;
 import com.ecode.modelevalplat.common.enums.EvalStatusEnum;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
@@ -9,19 +11,20 @@ import com.ecode.modelevalplat.dao.mapper.UserCompetitionMapper;
 import com.ecode.modelevalplat.dto.SubmissionResp;
 import com.ecode.modelevalplat.service.SubmissionService;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -45,13 +48,14 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     // TODO 用户鉴权
-    public SubmissionResp submitModel(Long userId, Long competitionId, String submitType, MultipartFile file) {
+    public ResVo<SubmissionResp> submitModel(Long userId, Long competitionId, String submitType, MultipartFile file) {
         String originalFilename = file.getOriginalFilename();
 
         try {
-            // 1. 空文件检查
+            // 1. 空文件检查（只检查文件大小，不对实质内容进行检查）
             if (file.isEmpty()) {
-                return SubmissionResp.failure("文件内容为空", "EMPTY_FILE", originalFilename);
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "文件内容为空");
+//                return SubmissionResp.failure("文件内容为空", "EMPTY_FILE", originalFilename);
             }
 
             // 2. 生成唯一文件名（保持原扩展名）
@@ -67,7 +71,8 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             // 3. 用户是否报名校验
             if (userCompetitionMapper.findByUserAndCompetition(userId, competitionId) == null) {
-                return SubmissionResp.failure("用户未报名该比赛", "NO_PERMISSION", originalFilename);
+                return ResVo.fail(StatusEnum.FORBID_ERROR_MIXED, "用户未报名该比赛");
+//                return SubmissionResp.failure("用户未报名该比赛", "NO_PERMISSION", originalFilename);
             }
 
             // 4. 比赛状态校验
@@ -76,24 +81,36 @@ public class SubmissionServiceImpl implements SubmissionService {
             Instant start = competition.getStartTime().toInstant();
             Instant end = competition.getEndTime().toInstant();
             if (now.isBefore(start) || now.isAfter(end)) {
-                return SubmissionResp.failure("比赛未在进行中", "COMPETITION_NOT_ACTIVE", originalFilename);
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "比赛未在进行中");
+//                return SubmissionResp.failure("比赛未在进行中", "COMPETITION_NOT_ACTIVE", originalFilename);
             }
 
             // 5. 每日配额校验
             if (checkDailyQuota(userId, competitionId) >= competition.getDailySubmissionLimit()) {
-                return SubmissionResp.failure("今日提交次数已达上限", "QUOTA_EXCEEDED", originalFilename);
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "今日提交次数已达上限");
+//                return SubmissionResp.failure("今日提交次数已达上限", "QUOTA_EXCEEDED", originalFilename);
             }
 
-            // 6. 文件扩展名校验
+            // 6. 文件扩展名校验、检查文件魔数（真实文件类型）
             if (!originalFilename.matches(".*\\.zip$")) {
-                return SubmissionResp.failure("仅支持ZIP格式", "INVALID_FILE_TYPE", originalFilename);
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "仅支持ZIP格式");
+//                return SubmissionResp.failure("仅支持ZIP格式", "INVALID_FILE_TYPE", originalFilename);
+            }
+
+            InputStream is = file.getInputStream();
+            byte[] fileHead = new byte[4];
+            is.read(fileHead);
+            // 验证是否是ZIP文件（PK头）
+            if (!Arrays.equals(fileHead, new byte[]{0x50, 0x4B, 0x03, 0x04})) {
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "非法的文件格式");
+//                return SubmissionResp.failure("非法的文件格式", "INVALID_FILE_TYPE", originalFilename);
             }
 
             // 7. 按提交类型校验
-            SubmissionResp validation = submitType.equals("MODEL")
+            ResVo<SubmissionResp> validation = submitType.equals("MODEL")
                     ? handleModelFile(file)
                     : handleDockerFile(file);
-            if (!validation.isSuccess()) {
+            if (validation.getStatus().getCode() != 0) {
                 return validation;
             }
 
@@ -106,7 +123,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             // 保存文件
             file.transferTo(destFile.toPath());
 
-            // 9. 创建提交记录
+            // 9. 在mysql数据库中创建提交记录
             SubmissionDO submission = new SubmissionDO();
             submission.setUserId(userId);
             submission.setCompetitionId(competitionId);
@@ -115,24 +132,24 @@ public class SubmissionServiceImpl implements SubmissionService {
             submission.setSubmitTime(new Date());
             submissionMapper.insert(submission);
 
-            return SubmissionResp.success(submission.getId(), originalFilename);
+            return ResVo.ok(SubmissionResp.success(submission.getId(), originalFilename));
+//            return SubmissionResp.success(submission.getId(), originalFilename);
 
         } catch (IOException e) {
-            return SubmissionResp.failure("文件存储失败: " + e.getMessage(), "FILE_STORAGE_ERROR", originalFilename);
+            return ResVo.fail(StatusEnum.SAVE_FILE_FAILED, e.getMessage());
+//            return SubmissionResp.failure("文件存储失败: " + e.getMessage(), "FILE_STORAGE_ERROR", originalFilename);
         } catch (Exception e) {
-            return SubmissionResp.failure("系统错误: " + e.getMessage(), "SYSTEM_ERROR", originalFilename);
+            return ResVo.fail(StatusEnum.UNEXPECT_ERROR, e.getMessage());
+//            return SubmissionResp.failure("系统错误: " + e.getMessage(), "SYSTEM_ERROR", originalFilename);
         }
     }
 
     @Override
-    public Page<SubmissionDO> getUserSubmissions(Long userId, Long competitionId, Pageable pageable) {
-        // 添加排序条件（按提交时间倒序）
-        Pageable sortedPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "submitTime")
-        );
-        return submissionMapper.findByUserAndCompetition(userId, competitionId, sortedPageable);
+    public PageInfo<SubmissionDO> getUserSubmissions(Long userId, Long competitionId, int pageNum, int pageSize) {
+        // 使用PageHelper启动分页，并指定排序
+        PageHelper.startPage(pageNum, pageSize);
+        List<SubmissionDO> list = submissionMapper.findByUserAndCompetition(userId, competitionId);
+        return new PageInfo<>(list);
     }
 
 
@@ -145,8 +162,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         );
     }
 
-    @Override
-    public SubmissionResp handleModelFile(MultipartFile file) {
+
+
+    public ResVo<SubmissionResp> handleModelFile(MultipartFile file) {
         try (ZipInputStream zipIn = new ZipInputStream(file.getInputStream())) {
             int predictPyCount = 0;
             int requirementsTxtCount = 0;
@@ -171,27 +189,24 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             // 验证文件数量
             if (predictPyCount == 0) {
-                return SubmissionResp.failure("ZIP包根目录缺少predict.py文件", "MISSING_PREDICT_PY", file.getOriginalFilename());
-            }
-            if (predictPyCount > 1) {
-                return SubmissionResp.failure("ZIP包根目录包含多个predict.py文件", "MULTIPLE_PREDICT_PY", file.getOriginalFilename());
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少predict.py文件");
             }
             if (requirementsTxtCount == 0) {
-                return SubmissionResp.failure("ZIP包根目录缺少requirements.txt文件", "MISSING_REQUIREMENTS", file.getOriginalFilename());
-            }
-            if (requirementsTxtCount > 1) {
-                return SubmissionResp.failure("ZIP包根目录包含多个requirements.txt文件", "MULTIPLE_REQUIREMENTS", file.getOriginalFilename());
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少requirements.txt文件");
+//                return SubmissionResp.failure("ZIP包根目录缺少requirements.txt文件", "MISSING_REQUIREMENTS", file.getOriginalFilename());
             }
 
-            return SubmissionResp.success(null, file.getOriginalFilename());
+            return ResVo.ok(SubmissionResp.success(null, file.getOriginalFilename()));
+//            return SubmissionResp.success(null, file.getOriginalFilename());
 
         } catch (IOException e) {
-            return SubmissionResp.failure("ZIP文件读取失败: " + e.getMessage(), "INVALID_ZIP", file.getOriginalFilename());
+            return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP文件读取失败: " + e.getMessage());
+//            return SubmissionResp.failure("ZIP文件读取失败: " + e.getMessage(), "INVALID_ZIP", file.getOriginalFilename());
         }
     }
 
-    @Override
-    public SubmissionResp handleDockerFile(MultipartFile file) {
+
+    public ResVo<SubmissionResp> handleDockerFile(MultipartFile file) {
         try (ZipInputStream zipIn = new ZipInputStream(file.getInputStream())) {
             int dockerfileCount = 0;
 
@@ -213,16 +228,16 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             // 验证文件数量
             if (dockerfileCount == 0) {
-                return SubmissionResp.failure("ZIP包中缺少Dockerfile文件", "MISSING_DOCKERFILE", file.getOriginalFilename());
-            }
-            if (dockerfileCount > 1) {
-                return SubmissionResp.failure("ZIP包中包含多个Dockerfile文件", "MULTIPLE_DOCKERFILES", file.getOriginalFilename());
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包中缺少Dockerfile文件");
+//                return SubmissionResp.failure("ZIP包中缺少Dockerfile文件", "MISSING_DOCKERFILE", file.getOriginalFilename());
             }
 
-            return SubmissionResp.success(null, file.getOriginalFilename());
+            return ResVo.ok(SubmissionResp.success(null, file.getOriginalFilename()));
+//            return SubmissionResp.success(null, file.getOriginalFilename());
 
         } catch (IOException e) {
-            return SubmissionResp.failure("ZIP文件读取失败: " + e.getMessage(), "INVALID_ZIP", file.getOriginalFilename());
+            return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP文件读取失败: " + e.getMessage());
+//            return SubmissionResp.failure("ZIP文件读取失败: " + e.getMessage(), "INVALID_ZIP", file.getOriginalFilename());
         }
     }
 }

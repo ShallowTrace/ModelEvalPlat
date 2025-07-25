@@ -2,8 +2,6 @@ package com.ecode.modelevalplat.dao.mapper;
 
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import org.apache.ibatis.annotations.*;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -33,14 +31,15 @@ public interface SubmissionMapper {
     @Select("SELECT * FROM submissions WHERE competition_id=#{competitionId}")
     List<SubmissionDO> findByCompetitionId(Long competitionId);
 
-    @Select("SELECT * FROM submissions WHERE user_id = #{userId} AND competition_id = #{competitionId}")
-    Page<SubmissionDO> findByUserAndCompetition(
+    @Select("SELECT * FROM submissions WHERE user_id = #{userId} AND competition_id = #{competitionId} ORDER BY submit_time DESC")
+    List<SubmissionDO> findByUserAndCompetition(
             @Param("userId") Long userId,
-            @Param("competitionId") Long competitionId,
-            Pageable pageable
+            @Param("competitionId") Long competitionId
     );
 
     @Select("SELECT COUNT(*) FROM submissions WHERE user_id=#{userId} AND competition_id=#{competitionId} " +
             "AND DATE(submit_time) = CURRENT_DATE")
     int countTodaySubmissions(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
+
+
 }
