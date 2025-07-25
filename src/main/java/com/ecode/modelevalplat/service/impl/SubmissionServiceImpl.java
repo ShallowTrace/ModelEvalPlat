@@ -1,6 +1,6 @@
 package com.ecode.modelevalplat.service.impl;
 
-import com.ecode.modelevalplat.common.enums.StatusEnum;
+import com.ecode.modelevalplat.common.enums.EvalStatusEnum;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
@@ -111,7 +111,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             submission.setUserId(userId);
             submission.setCompetitionId(competitionId);
             submission.setModelPath(persistPath);
-            submission.setStatus(StatusEnum.PENDING.name());
+            submission.setStatus(EvalStatusEnum.PENDING.name());
             submission.setSubmitTime(new Date());
             submissionMapper.insert(submission);
 

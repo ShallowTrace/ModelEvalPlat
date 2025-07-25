@@ -1,7 +1,7 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ecode.modelevalplat.common.enums.StatusEnum;
+import com.ecode.modelevalplat.common.enums.EvalStatusEnum;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,14 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
-import com.ecode.modelevalplat.dto.EvaluationResultDTO;
 import com.ecode.modelevalplat.service.EvalService;
 import com.ecode.modelevalplat.dao.mapper.EvaluationResultMapper;
 import com.ecode.modelevalplat.dao.entity.EvaluationResultDO;
@@ -120,7 +118,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         evaluationResult.setSubmitTime(new Date());
 
         evaluationResultMapper.insert(evaluationResult);
-        submission.setStatus(exitCode == 0 ? StatusEnum.SUCCESS.name() : StatusEnum.FAILED.name());
+        submission.setStatus(exitCode == 0 ? EvalStatusEnum.SUCCESS.name() : EvalStatusEnum.FAILED.name());
         submissionMapper.updateById(submission);
 
         return csvFilePath;

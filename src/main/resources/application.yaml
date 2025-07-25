@@ -1,14 +1,57 @@
 # 模型文件保存路径
-MODELFILE_STORAGE_PATH: C:\Users\ShallowTrace\Desktop\submission\
+MODELFILE_STORAGE_PATH: /Users/jingyalin/
 
-
+database:
+  name: model_eval_plat
 server:
-  port: 8002
+  port: 8111
 
 spring:
+  jmx:
+    enabled: false
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    timeout: 10000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: email_group
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: jingyaling52000@gmail.com
+    password: wfwkoxhfotwayqxs   # 是“应用专用密码”，不是 Gmail 登录密码
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   datasource:
     username: root
-    password: 5881113jyl
+    password: 588113jyl
     url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
 
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -28,7 +71,46 @@ spring:
     enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
     drop-first: true # 为 true 的话每次启动项目会删除所有数据库表
 
-# 默认的数据库名
-database:
-  name: model_eval_plat
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      sendVerifyCode:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      register:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+
+app:
+  security:
+    sign:
+       secret: sDf9!2kLm#8PqZx7&vRt3$UyWq1XlMn0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+    jmx:
+      exposure:
+        include: non
+  endpoint:
+    health:
+      show-details: always
+
+
+
 
