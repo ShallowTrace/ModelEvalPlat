@@ -63,7 +63,6 @@ CREATE TABLE `evaluation_results` (
     `result_json` TEXT COMMENT '评估结果（JSON格式）',
     `score` FLOAT NOT NULL COMMENT '总分或主要指标',
     PRIMARY KEY (`id`),
-    INDEX `idx_user_competition_time` (`user_id`, `competition_id`, `submit_time`)
+    INDEX `idx_comp_user_score` (competition_id, user_id, score)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评估结果表';
-
 

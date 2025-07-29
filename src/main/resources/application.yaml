@@ -7,10 +7,9 @@ server:
 
 spring:
   datasource:
-    username: czy
+    username: root
     password: 123456
     url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
-
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-test-query: select 1
@@ -18,7 +17,8 @@ spring:
       idle-timeout: 300000
       maximum-pool-size: 5
       minimum-idle: 5
-    servlet:
+
+  servlet:
       multipart:
         max-file-size: 500MB
         max-request-size: 500MB
@@ -26,12 +26,20 @@ spring:
   liquibase:
     change-log: classpath:liquibase/master.xml
     enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
-    drop-first: false # 为 true 的话每次启动项目会删除所有数据库表
+    drop-first: true # 为 true 的话每次启动项目会删除所有数据库表
 
 # 默认的数据库名
 database:
   name: model_eval_plat
 
-docker:
-  build:
-    context: ${user.dir}
+mybatis-plus:
+  configuration:
+    #开启下划线转驼峰
+    map-underscore-to-camel-case: true
+
+pagehelper:
+  helper-dialect: mysql  # 指定数据库方言
+  reasonable: true      # 合理分页（页码小于1时返回第一页，大于最大页时返回最后一页）
+  support-methods-arguments: true # 启用方法参数分页
+  close-conn: true # 自动关闭连接
+

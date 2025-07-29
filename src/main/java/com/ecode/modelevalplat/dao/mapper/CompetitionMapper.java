@@ -51,13 +51,8 @@ public interface CompetitionMapper {
     @Select("SELECT * FROM competitions WHERE id=#{id}")
     CompetitionDO findById(Long id);
 
-    // 原子更新参赛人数
-    @Update("UPDATE competitions " +
-            "SET participant_count = participant_count + 1 " +
-            "WHERE id = #{competitionId}")
-    int incrementParticipantCount(@Param("competitionId") Long competitionId);
+    // 获取对应比赛的数据集与标签路径
+    @Select("SELECT path FROM competitions WHERE id=#{competitionId}")
+    String getPath(Long competitionId);
 
-//    查询比赛测试集路径
-    @Select("SELECT path FROM competitions WHERE id = #{id}")
-    String selectPath(Long id);
 }
