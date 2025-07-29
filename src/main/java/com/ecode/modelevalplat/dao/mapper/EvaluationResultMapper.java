@@ -1,5 +1,6 @@
 package com.ecode.modelevalplat.dao.mapper;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ecode.modelevalplat.dao.entity.EvaluationResultDO;
 import com.ecode.modelevalplat.dto.UserRankDTO;

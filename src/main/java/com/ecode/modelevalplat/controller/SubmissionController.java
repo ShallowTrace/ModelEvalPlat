@@ -5,6 +5,7 @@ package com.ecode.modelevalplat.controller;
 import com.ecode.modelevalplat.common.ResVo;
 import com.ecode.modelevalplat.dto.SubmissionResp;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
+import com.ecode.modelevalplat.service.EvalService;
 import com.ecode.modelevalplat.service.SubmissionService;
 
 
@@ -22,22 +23,32 @@ public class SubmissionController {
     @Autowired
     private SubmissionService submissionService;
 
-    @ResponseBody
+    @Autowired
+    private EvalService evalService;
+
     @PostMapping("/{competitionId}/submissions")
     public ResVo<SubmissionResp> handleFileUpload(
             @PathVariable Long competitionId,
             @RequestParam("submitType") String submitType, // 提交类型，包括 "MODEL","DOCKER"两种
-            @RequestParam(value = "modelPackage", required = false) MultipartFile modelFile,
+            @RequestParam(value = "modelFile", required = false) MultipartFile modelFile,
             @RequestParam(value = "dockerFile", required = false) MultipartFile dockerFile) {
 
 //        MultipartFile targetFile = submitType.equals("MODEL") ? modelFile : dockerFile;
         // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
+        ResVo<SubmissionResp> resp;
         if (submitType.equals("MODEL")) {
-            return submissionService.submitModel(1001L, competitionId, submitType, modelFile);
+            resp = submissionService.submitModel(1001L, competitionId, submitType, modelFile);
         }
         else {
-            return submissionService.submitModel(1001L, competitionId, submitType, dockerFile);
+            resp = submissionService.submitModel(1001L, competitionId, submitType, dockerFile);
         }
+
+        // 如果提交成功，则开始异步评测
+        if (resp.getStatus().getCode() == 0) {
+            evalService.asyncEvaluateModel(resp.getResult().getSubmissionId(), submitType);
+        }
+
+        return resp;
     }
 
     // 提交记录查询，按时间倒序

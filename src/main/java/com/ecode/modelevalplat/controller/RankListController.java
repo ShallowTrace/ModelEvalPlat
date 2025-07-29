@@ -41,9 +41,4 @@ public class RankListController {
         UserRankDTO userRank = rankListService.getUserRank(userId, competitionId);
         return ResVo.ok(userRank);
     }
-
-    @GetMapping("/hello")
-    public ResVo<String> hello() {
-        return ResVo.ok("hello");
-    }
 }

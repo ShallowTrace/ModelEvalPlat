@@ -168,40 +168,50 @@ public class SubmissionServiceImpl implements SubmissionService {
         try (ZipInputStream zipIn = new ZipInputStream(file.getInputStream())) {
             int predictPyCount = 0;
             int requirementsTxtCount = 0;
+            boolean hasPredictionResultDir = false;
 
             // 遍历ZIP文件条目
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
                 String entryName = entry.getName();
 
-                // 跳过目录和嵌套文件（只检查根目录）
-                if (entry.isDirectory() || entryName.contains("/")) {
+                // 处理目录条目（检查prediction_result目录）
+                if (entry.isDirectory()) {
+                    if (entryName.equals("prediction_result/")) {
+                        hasPredictionResultDir = true;
+                    }
                     continue;
                 }
 
-                // 统计目标文件
-                if (entryName.equals("predict.py")) {
-                    predictPyCount++;
-                } else if (entryName.equals("requirements.txt")) {
-                    requirementsTxtCount++;
+                // 处理文件路径
+                if (entryName.startsWith("code/")) {
+                    // 检查code目录下的predict.py
+                    if (entryName.equals("code/predict.py")) {
+                        predictPyCount++;
+                    }
+                } else {
+                    // 检查根目录的requirements.txt
+                    if (entryName.equals("requirements.txt")) {
+                        requirementsTxtCount++;
+                    }
                 }
             }
 
-            // 验证文件数量
+            // 验证文件结构
             if (predictPyCount == 0) {
-                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少predict.py文件");
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包code目录缺少predict.py文件");
             }
             if (requirementsTxtCount == 0) {
                 return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少requirements.txt文件");
-//                return SubmissionResp.failure("ZIP包根目录缺少requirements.txt文件", "MISSING_REQUIREMENTS", file.getOriginalFilename());
+            }
+            if (!hasPredictionResultDir) {
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少prediction_result目录");
             }
 
             return ResVo.ok(SubmissionResp.success(null, file.getOriginalFilename()));
-//            return SubmissionResp.success(null, file.getOriginalFilename());
 
         } catch (IOException e) {
             return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP文件读取失败: " + e.getMessage());
-//            return SubmissionResp.failure("ZIP文件读取失败: " + e.getMessage(), "INVALID_ZIP", file.getOriginalFilename());
         }
     }
 

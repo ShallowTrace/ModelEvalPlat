@@ -1,5 +1,7 @@
 package com.ecode.modelevalplat.dao.mapper;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import org.apache.ibatis.annotations.*;
 
@@ -17,6 +19,11 @@ public interface SubmissionMapper {
     @Update("UPDATE submissions SET status=#{status} WHERE id=#{id}")
     void updateStatus(SubmissionDO submission);
 
+    @Update("UPDATE submissions SET status=#{status} WHERE id=#{id}")
+    void updateStatusById(@Param("id") Long id, @Param("status") String status);
+
+    @Select("SELECT competition_id FROM submissions WHERE id= #{id}")
+    Long getCompetitionId(Long id);
 
     @Delete("DELETE FROM submissions WHERE id=#{id}")
     void delete(Long id);

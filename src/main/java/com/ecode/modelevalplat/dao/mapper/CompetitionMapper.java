@@ -51,4 +51,8 @@ public interface CompetitionMapper {
     @Select("SELECT * FROM competitions WHERE id=#{id}")
     CompetitionDO findById(Long id);
 
+    // 获取对应比赛的数据集与标签路径
+    @Select("SELECT path FROM competitions WHERE id=#{competitionId}")
+    String getPath(Long competitionId);
+
 }
