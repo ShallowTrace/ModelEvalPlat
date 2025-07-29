@@ -69,6 +69,6 @@ public class CompetitionRegistrationServiceImpl implements CompetitionRegistrati
         userCompetitionMapper.insert(newRegistration);
 
         // 6. 更新比赛人数
-        return competitionMapper.incrementParticipantCount(competitionId);
+//        return competitionMapper.incrementParticipantCount(competitionId);
     }
 }
