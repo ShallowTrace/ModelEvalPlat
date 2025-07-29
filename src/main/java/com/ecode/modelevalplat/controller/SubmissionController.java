@@ -34,7 +34,8 @@ public class SubmissionController {
             @RequestParam("dockerFile") MultipartFile dockerFile) {
 
         MultipartFile targetFile = submitType.equals("MODEL") ? modelFile : dockerFile;
-        return submissionService.submitModel(1L, competitionId, submitType, targetFile);
+        SubmissionResp submissionResp=submissionService.submitModel(1L, competitionId, submitType, targetFile);
+        return submissionResp;
     }
 
     // 提交记录查询，按时间倒序
