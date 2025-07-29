@@ -1,34 +1,36 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ecode.modelevalplat.common.enums.StatusEnum;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.ecode.modelevalplat.common.enums.EvalStatusEnum;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import lombok.Data;
+import com.ecode.modelevalplat.common.exception.PythonExecuteException;
+import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
+import com.ecode.modelevalplat.dao.mapper.SubmissionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
-import com.ecode.modelevalplat.dto.EvaluationResultDTO;
 import com.ecode.modelevalplat.service.EvalService;
 import com.ecode.modelevalplat.dao.mapper.EvaluationResultMapper;
 import com.ecode.modelevalplat.dao.entity.EvaluationResultDO;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import org.springframework.util.FileSystemUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -36,122 +38,196 @@ import com.opencsv.exceptions.CsvException;
 public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, EvaluationResultDO> implements EvalService {
 
 
-    private BaseMapper<SubmissionDO> submissionMapper;
-    private BaseMapper<EvaluationResultDO> evaluationResultMapper;
+    private final SubmissionMapper submissionMapper;
+    private final BaseMapper<EvaluationResultDO> evaluationResultMapper;
+    private final CompetitionMapper competitionMapper;
+
+    // 线程池配置
+    private final ThreadPoolExecutor evalExecutor = new ThreadPoolExecutor(
+            1, 1,
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>()
+    );
+    // 任务队列
+//    private final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
 
     @Override
     public String getModelPath(Long submissionId) {
-
-        // LambdaQueryWrapper<UserDO> queryWrapper = Wrappers.lambdaQuery(UserDO.class)
-        // .eq(UserDO::getUsername, username);
-        // UserDO userDO = baseMapper.selectOne(queryWrapper);
-        LambdaQueryWrapper<SubmissionDO> queryWrapper = Wrappers.lambdaQuery(SubmissionDO.class)
-                .eq(SubmissionDO::getId, submissionId);
-//        SubmissionDO submission = baseMapper.selectOne(queryWrapper);
-        SubmissionDO submission = submissionMapper.selectOne(queryWrapper);
+        SubmissionDO submission = submissionMapper.findById(submissionId);
         if (submission == null) {
             throw new IllegalArgumentException("Submission not found");
         }
         return submission.getModelPath();
-
     }
 
     @Override
-    public String evaluateModel(Long submissionId, Long competitionId) {
-        // 1.获取脚本地址
-        String modelPath = getModelPath(submissionId);
-        if (modelPath == null || modelPath.isEmpty()) {
-            throw new RuntimeException("模型路径不存在 for submission: " + submissionId);
-        }
-        // 2. 创建CSV输出目录（确保目录存在）
-        String csvOutputDir = "src/main/resources/output/csv/";
-        Path outputPath = Paths.get(csvOutputDir);
+    public void evaluateModel(Long submissionId) {
+        Long competitionId = submissionMapper.getCompetitionId(submissionId);
+
+        Path targetDir = null;
+        String evalStatus = EvalStatusEnum.PROCESSING.name();
+        submissionMapper.updateStatusById(submissionId, evalStatus);
+        log.info("开始评估模型: {}", submissionId);
+        EvaluationResultDO evaluationResult = new EvaluationResultDO();
         try {
-            if (!Files.exists(outputPath)) {
-                Files.createDirectories(outputPath);
+            // 1.获取提交文件地址
+            String modelPath = getModelPath(submissionId);
+            if (modelPath == null || modelPath.isEmpty()) {
+                throw new RuntimeException("模型路径不存在 for submission: " + submissionId);
+            }
+
+            // 2. 解压ZIP文件
+            Path originalZipPath = Paths.get(modelPath);
+            // 生成解压目录路径（与ZIP文件同名不带扩展名）
+            String targetDirName = originalZipPath.getFileName().toString().replace(".zip", "");
+            targetDir = originalZipPath.getParent().resolve(targetDirName);
+            unzipModelFile(modelPath, targetDir);
+
+            // 3. 获取测试集路径
+            String datasetPath = Paths.get(competitionMapper.getPath(competitionId)).resolve("data").toString();
+
+            // 4. 运行Python脚本，并根据是否成功运行创建评估记录
+            // TODO 环境隔离
+            executePythonScript(datasetPath, targetDir);
+
+            // 5. 如果运行成功，根据预测结果csv计算得分
+            String predictCsvPath = targetDir.resolve("prediction_result").resolve("result.csv").toString();
+            String groundTruthCsvPath = Paths.get(competitionMapper.getPath(competitionId)).resolve("Ground_Truth.csv").toString();
+            evaluationResult = processEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
+
+            // 评估执行完毕，无异常，更新提交状态为SUCCESS
+            evalStatus = EvalStatusEnum.SUCCESS.name();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (PythonExecuteException e) {
+            throw new PythonExecuteException("python进程错误：" + e.getMessage());
+        } catch (RuntimeException e) {
+            throw new RuntimeException("评估模块出错：" + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("未知错误：" + e.getMessage());
+        } finally {
+            // 如评估成功则保存评估结果
+            if (evalStatus.equals(EvalStatusEnum.SUCCESS.name())) {
+                evaluationResultMapper.insert(evaluationResult);
+            } else {
+                evalStatus = EvalStatusEnum.FAILED.name();
+            }
+
+            // 更新提交状态
+            submissionMapper.updateStatusById(submissionId, evalStatus);
+
+            // 删除解压的临时文件
+            try {
+                if (targetDir != null) {
+                    FileSystemUtils.deleteRecursively(targetDir);
+                }
+            } catch (IOException e) {
+                log.error("删除临时文件失败: {} {}", e, e.getMessage());
+            }
+            log.info("评估结束: {}", submissionId);
+        }
+    }
+
+    private void unzipModelFile(String modelPath, Path targetDir) throws IOException {
+        try {
+            // 创建目标解压目录
+            Files.createDirectories(targetDir);
+
+            try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(modelPath))) {
+                ZipEntry entry;
+
+                while ((entry = zipIn.getNextEntry()) != null) {
+                    Path entryPath = targetDir.resolve(entry.getName()).normalize();
+
+                    // 安全校验：确保解压路径在目标目录内
+                    if (!entryPath.startsWith(targetDir)) {
+                        throw new IOException("非法文件路径: " + entry.getName());
+                    }
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(entryPath);
+                    } else {
+                        Files.createDirectories(entryPath.getParent());
+                        Files.copy(zipIn, entryPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
             }
         } catch (IOException e) {
-            throw new RuntimeException("创建CSV输出目录失败: " + e.getMessage(), e);
+            log.error("解压失败", e);
+            throw new IOException("模型文件解压失败" + e.getMessage(), e);
         }
-        String csvFileName = "evaluation_result_" + submissionId + ".csv";
-        String csvFilePath = csvOutputDir + csvFileName;
+    }
 
-        // 3. 运行Python脚本并指定CSV输出路径
+    private void executePythonScript(String datasetPath, Path targetDir) throws InterruptedException, IOException {
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "python",
-                modelPath,
-                "--output", csvFilePath, // 传递输出路径给Python脚本
-                "--competitionId", competitionId.toString());
+                "code/predict.py",
+                "--testdataset_path", datasetPath); // 传递测试集路径给Python脚本
+        processBuilder.directory(new File(targetDir.toString()));
 
         int exitCode = -1;
-
-         try {
-        Process process = processBuilder.start();
-        // 读取脚本输出（可选：记录日志）
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), "UTF-8"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log.info("Python脚本输出: {}", line);
-
-            }
-        }
-        // 读取错误流（可选：捕获脚本错误）
-        try (BufferedReader errorReader = new BufferedReader(
-                new InputStreamReader(process.getErrorStream(), "UTF-8"))) {
+        BufferedReader errorReader = null;
+        Process process = null;
+        try {
+            process = processBuilder.start();
+            // 后台读取错误流，不可返回到前端
+            errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
             String errorLine;
             while ((errorLine = errorReader.readLine()) != null) {
-//                log.error("Python脚本错误: {}", errorLine);
                 log.error("Python脚本错误: {}", errorLine);
             }
+            exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new PythonExecuteException("Python脚本执行失败，退出码: " + exitCode);
+            }
+        } finally {
+            if (errorReader != null) {
+                try {
+                    errorReader.close();
+                } catch (IOException e) {
+                    log.error("Failed to close errorReader: " + e.getMessage());
+                }
+            }
+            if (process != null) {
+                process.destroy();
+            }
         }
-        exitCode = process.waitFor();
-    } catch (IOException | InterruptedException e) {
-        Thread.currentThread().interrupt(); // 恢复中断状态
-        throw new RuntimeException("Python脚本执行失败: " + e.getMessage(), e);
-    }
-         //评估表存入数据
-        LambdaQueryWrapper<SubmissionDO> queryWrapper = Wrappers.lambdaQuery(SubmissionDO.class)
-                .eq(SubmissionDO::getId, submissionId);
-        SubmissionDO submission = submissionMapper.selectOne(queryWrapper);
-        EvaluationResultDO evaluationResult = new EvaluationResultDO();
-        evaluationResult.setUserId(submission.getUserId());
-        evaluationResult.setCompetitionId(competitionId);
-        evaluationResult.setSubmitTime(new Date());
-
-        evaluationResultMapper.insert(evaluationResult);
-        submission.setStatus(exitCode == 0 ? StatusEnum.SUCCESS.name() : StatusEnum.FAILED.name());
-        submissionMapper.updateById(submission);
-
-        return csvFilePath;
     }
 
     @Override
-
-    public void processEvaluationResult(String csvPath, Long evaluationResultId) {
-        // 系统提供的 CSV 文件路径，需根据实际情况修改
-        String systemCsvPath = "path/to/system.csv";
-
+    public EvaluationResultDO processEvaluationResult(String predictCsvPath, String groundTruthCsvPath, Long submissionId) throws IOException{
+        // 读取 CSV 文件
+        List<String> predictedLabels;
+        List<String> trueLabels;
         try {
-            // 读取 CSV 文件
-            List<String> predictedLabels = readLabelsFromCsv(csvPath);
-            List<String> trueLabels = readLabelsFromCsv(systemCsvPath);
-
-            // 计算评估指标
-            double accuracy = calculateAccuracy(predictedLabels, trueLabels);
-            double f1Score = calculateF1Score(predictedLabels, trueLabels);
-
-            // 更新数据库
-            EvaluationResultDO evaluationResult = evaluationResultMapper.selectById(evaluationResultId);
-            if (evaluationResult != null) {
-                evaluationResult.setScore((float) f1Score);
-                // 可以扩展将准确率等其他指标存入 resultJson
-                evaluationResult.setResultJson(String.format("{\"accuracy\": %.2f, \"f1Score\": %.2f}", accuracy, f1Score));
-                evaluationResultMapper.updateById(evaluationResult);
-            }
+            predictedLabels = readLabelsFromCsv(predictCsvPath);
+            trueLabels = readLabelsFromCsv(groundTruthCsvPath);
         } catch (IOException | CsvException e) {
-            throw new RuntimeException("处理评估结果失败: " + e.getMessage(), e);
+            throw new RuntimeException("csv文件错误：" + e.getMessage());
         }
+
+
+        // 计算评估指标
+        double accuracy = calculateAccuracy(predictedLabels, trueLabels);
+        List<Double> PrecisionRecallF1Score = calculatePrecisionRecallF1Score(predictedLabels, trueLabels);
+        double precision = PrecisionRecallF1Score.get(0);
+        double recall = PrecisionRecallF1Score.get(1);
+        double f1Score = PrecisionRecallF1Score.get(2);
+
+        // 构建评估结果的新条目，但暂不存入数据库
+        SubmissionDO submission = submissionMapper.findById(submissionId);
+        EvaluationResultDO evaluationResult = new EvaluationResultDO();
+        evaluationResult.setUserId(submission.getUserId());
+        evaluationResult.setCompetitionId(submission.getCompetitionId());
+        evaluationResult.setSubmitTime(submission.getSubmitTime());
+        // TODO:根据不同比赛的要求计算分数并存储
+        double score = 0.5 * accuracy + 0.5 * f1Score;
+        evaluationResult.setScore((float) score);
+        // 可以扩展将准确率等其他指标存入 resultJson
+        evaluationResult.setResultJson(String.format("{\"accuracy\": %.2f, \"precision\": %.2f, \"recall\": %.2f, \"f1Score\": %.2f}", accuracy, precision, recall, f1Score));
+        return evaluationResult;
     }
 
     private List<String> readLabelsFromCsv(String csvPath) throws IOException, CsvException {
@@ -173,7 +249,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         return (double) correct / predicted.size();
     }
 
-    private double calculateF1Score(List<String> predicted, List<String> actual) {
+    private List<Double> calculatePrecisionRecallF1Score(List<String> predicted, List<String> actual) {
         int truePositives = 0;
         int falsePositives = 0;
         int falseNegatives = 0;
@@ -189,7 +265,27 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
         double precision = (double) truePositives / (truePositives + falsePositives);
         double recall = (double) truePositives / (truePositives + falseNegatives);
+        double f1Score = 2 * (precision * recall) / (precision + recall);
 
-        return 2 * (precision * recall) / (precision + recall);
+        return List.of(precision, recall, f1Score);
+    }
+
+    @Override
+    public void asyncEvaluateModel(Long submissionId, String submitType) {
+        // 将任务加入队列
+        evalExecutor.execute(() -> {
+            try {
+                // 实际评估逻辑
+                if (submitType.equals("MODEL")) {
+                    this.evaluateModel(submissionId);
+                }
+//                else if (submitType.equals("DOCKER")) {
+//                    this.evaluateDocker(submissionId);
+//                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }
