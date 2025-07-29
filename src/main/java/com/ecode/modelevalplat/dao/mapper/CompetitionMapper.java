@@ -53,6 +53,12 @@ public interface CompetitionMapper {
 
     // 获取对应比赛的数据集与标签路径
     @Select("SELECT path FROM competitions WHERE id=#{competitionId}")
-    String getPath(Long competitionId);
+    String selectPath(Long competitionId);
 
+//         6. 更新比赛人数
+    @Update("UPDATE competition " +
+            "SET participant_count = participant_count + 1 " +
+            "WHERE competition_id = #{competitionId} " +
+            "RETURNING participant_count")
+    int incrementParticipantCount(@Param("competitionId") Long competitionId);
 }
