@@ -25,6 +25,9 @@ public interface SubmissionMapper {
     @Select("SELECT competition_id FROM submissions WHERE id= #{id}")
     Long getCompetitionId(Long id);
 
+    @Select("SELECT model_path FROM submissions WHERE id= #{id}")
+    String getModelPath(Long id);
+
     @Delete("DELETE FROM submissions WHERE id=#{id}")
     void delete(Long id);
 

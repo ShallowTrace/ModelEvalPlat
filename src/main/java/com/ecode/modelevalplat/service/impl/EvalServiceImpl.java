@@ -4,9 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ecode.modelevalplat.common.enums.EvalStatusEnum;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+
 
 import com.ecode.modelevalplat.common.exception.PythonExecuteException;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
@@ -20,7 +19,6 @@ import com.ecode.modelevalplat.dao.mapper.EvaluationResultMapper;
 import com.ecode.modelevalplat.dao.entity.EvaluationResultDO;
 import lombok.extern.slf4j.Slf4j;
 
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -52,15 +50,6 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 //    private final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
 
     @Override
-    public String getModelPath(Long submissionId) {
-        SubmissionDO submission = submissionMapper.findById(submissionId);
-        if (submission == null) {
-            throw new IllegalArgumentException("Submission not found");
-        }
-        return submission.getModelPath();
-    }
-
-    @Override
     public void evaluateModel(Long submissionId) {
         Long competitionId = submissionMapper.getCompetitionId(submissionId);
 
@@ -71,14 +60,14 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         EvaluationResultDO evaluationResult = new EvaluationResultDO();
         try {
             // 1.获取提交文件地址
-            String modelPath = getModelPath(submissionId);
+            String modelPath = submissionMapper.getModelPath(submissionId);
             if (modelPath == null || modelPath.isEmpty()) {
                 throw new RuntimeException("模型路径不存在 for submission: " + submissionId);
             }
 
             // 2. 解压ZIP文件
             Path originalZipPath = Paths.get(modelPath);
-            // 生成解压目录路径（与ZIP文件同名不带扩展名）
+            // 生成解压目录路径targetDir（与ZIP文件同名不带扩展名）
             String targetDirName = originalZipPath.getFileName().toString().replace(".zip", "");
             targetDir = originalZipPath.getParent().resolve(targetDirName);
             unzipModelFile(modelPath, targetDir);
@@ -87,7 +76,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             String datasetPath = Paths.get(competitionMapper.getPath(competitionId)).resolve("data").toString();
 
             // 4. 运行Python脚本，并根据是否成功运行创建评估记录
-            // TODO 环境隔离
+            // TODO 检查submitType，如果是DOCKER，则执行Docker脚本；如果是MODEL，则构建DOCKERFILE后执行Docker脚本
             executePythonScript(datasetPath, targetDir);
 
             // 5. 如果运行成功，根据预测结果csv计算得分
@@ -157,6 +146,66 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         } catch (IOException e) {
             log.error("解压失败", e);
             throw new IOException("模型文件解压失败" + e.getMessage(), e);
+        }
+    }
+
+    // 生成Dockerfile
+    private void generateDockerfile(Path targetDir) throws IOException {
+        // TODO 读取requirements.txt中的python版本
+        List<String> dockerfileContent = List.of(
+                "FROM python:3.8-slim",
+                "WORKDIR /app",
+                "COPY . .",
+                "RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple",
+                "CMD [\"python\", \"code/predict.py\", \"--testdataset_path\", \"/mnt/data\"]"
+        );
+
+        Path dockerfilePath = targetDir.resolve("Dockerfile");
+        Files.write(dockerfilePath, dockerfileContent, StandardOpenOption.CREATE);
+    }
+
+
+    @Override
+    public void executeDocker(String datasetPath, Path targetDir) throws InterruptedException, IOException {
+        // TODO 检查代码，并添加指定csv文件输出位置的逻辑
+        // 创建结果目录（保持与Python执行逻辑相同的路径）
+        Path resultDir = targetDir.resolve("prediction_result");
+//        Files.createDirectories(resultDir);
+
+        // 构建Docker镜像
+        ProcessBuilder buildProcess = new ProcessBuilder(
+                "docker", "build", "-t", "model-eval", "."
+        );
+
+        // 运行容器时挂载数据卷（无需复制数据集）
+        ProcessBuilder runProcess = new ProcessBuilder(
+                "docker", "run", "--rm",
+                "-v", datasetPath + ":/mnt/data",          // 挂载测试数据集
+                "-v", targetDir + ":/app",  // 宿主机解压目录映射到容器工作目录
+                "-v", resultDir + ":/app/prediction_result", // 挂载结果目录
+                "model-eval"
+        );
+        executeProcessWithLogging(buildProcess, "Docker构建");
+        executeProcessWithLogging(runProcess, "Docker运行");
+    }
+
+    // 通用的进程执行方法（重构原有Python执行逻辑）
+    private void executeProcessWithLogging(ProcessBuilder processBuilder, String processName)
+            throws IOException, InterruptedException {
+
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                log.info("{} 输出: {}", processName, line);
+            }
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new PythonExecuteException(processName + "失败，退出码: " + exitCode);
         }
     }
 
