@@ -84,7 +84,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             unzipModelFile(modelPath, targetDir);
 
             // 3. 获取测试集路径
-            String datasetPath = Paths.get(competitionMapper.getPath(competitionId)).resolve("data").toString();
+            String datasetPath = Paths.get(competitionMapper.selectPath(competitionId)).resolve("data").toString();
 
             // 4. 运行Python脚本，并根据是否成功运行创建评估记录
             // TODO 环境隔离
@@ -92,7 +92,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
             // 5. 如果运行成功，根据预测结果csv计算得分
             String predictCsvPath = targetDir.resolve("prediction_result").resolve("result.csv").toString();
-            String groundTruthCsvPath = Paths.get(competitionMapper.getPath(competitionId)).resolve("Ground_Truth.csv").toString();
+            String groundTruthCsvPath = Paths.get(competitionMapper.selectPath(competitionId)).resolve("Ground_Truth.csv").toString();
             evaluationResult = processEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
 
             // 评估执行完毕，无异常，更新提交状态为SUCCESS
