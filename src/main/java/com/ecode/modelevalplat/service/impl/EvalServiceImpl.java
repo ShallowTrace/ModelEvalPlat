@@ -7,9 +7,13 @@ import java.io.*;
 import java.nio.file.*;
 
 
+import com.ecode.modelevalplat.common.exception.DockerException;
 import com.ecode.modelevalplat.common.exception.PythonExecuteException;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
 import com.ecode.modelevalplat.dao.mapper.SubmissionMapper;
+import com.ecode.modelevalplat.service.EvalP2DService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.dockerjava.api.command.RemoveImageCmd;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -22,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -40,6 +46,9 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
     private final BaseMapper<EvaluationResultDO> evaluationResultMapper;
     private final CompetitionMapper competitionMapper;
 
+    private final EvalP2DService evalP2DService;
+    private final EvalDockerServiceImpl evalDockerService;
+
     // 线程池配置
     private final ThreadPoolExecutor evalExecutor = new ThreadPoolExecutor(
             1, 1,
@@ -50,7 +59,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 //    private final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
 
     @Override
-    public void evaluateModel(Long submissionId) {
+    public void evaluateModel(Long submissionId, String submitType) {
         Long competitionId = submissionMapper.getCompetitionId(submissionId);
 
         Path targetDir = null;
@@ -72,17 +81,26 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             targetDir = originalZipPath.getParent().resolve(targetDirName);
             unzipModelFile(modelPath, targetDir);
 
-            // 3. 获取测试集路径
-            String datasetPath = Paths.get(competitionMapper.selectPath(competitionId)).resolve("data").toString();
+            // 3. 获取测试集路径和真实值csv路径
+            // 测试集路径在数据库保存的测试集路径下的data目录下，真实值csv在数据库保存的测试集路径下的Ground_Truth.csv
+            Path competitionDatasetAndCSVPath = Paths.get(competitionMapper.selectPath(competitionId));
+            String datasetPath = competitionDatasetAndCSVPath.resolve("data").toString();
+            String groundTruthCsvPath = competitionDatasetAndCSVPath.resolve("Ground_Truth.csv").toString();
 
-            // 4. 运行Python脚本，并根据是否成功运行创建评估记录
-            // TODO 检查submitType，如果是DOCKER，则执行Docker脚本；如果是MODEL，则构建DOCKERFILE后执行Docker脚本
-            executePythonScript(datasetPath, targetDir);
+            // 4. 检查submitType，如果是DOCKER，则执行Docker脚本；如果是MODEL，则构建DOCKERFILE后执行Docker脚本
+            // executePythonScript(datasetPath, targetDir);
+            if (submitType.equals("MODEL")) {
+                evalP2DService.generateDockerfile(targetDir);
+                executeDocker(datasetPath, targetDir, submissionId);
+            }
+            else if (submitType.equals("DOCKER")) {
+                evalDockerService.evaluate(competitionId);
+            }
+
 
             // 5. 如果运行成功，根据预测结果csv计算得分
             String predictCsvPath = targetDir.resolve("prediction_result").resolve("result.csv").toString();
-            String groundTruthCsvPath = Paths.get(competitionMapper.selectPath(competitionId)).resolve("Ground_Truth.csv").toString();
-            evaluationResult = processEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
+            evaluationResult = processClassificationEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
 
             // 评估执行完毕，无异常，更新提交状态为SUCCESS
             evalStatus = EvalStatusEnum.SUCCESS.name();
@@ -93,6 +111,8 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             throw new RuntimeException(e);
         } catch (PythonExecuteException e) {
             throw new PythonExecuteException("python进程错误：" + e.getMessage());
+        } catch (DockerException e) {
+            throw new DockerException("docker进程错误：" + e.getMessage());
         } catch (RuntimeException e) {
             throw new RuntimeException("评估模块出错：" + e.getMessage());
         } catch (Exception e) {
@@ -108,13 +128,27 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             // 更新提交状态
             submissionMapper.updateStatusById(submissionId, evalStatus);
 
-            // 删除解压的临时文件
-            try {
-                if (targetDir != null) {
-                    FileSystemUtils.deleteRecursively(targetDir);
+
+            if (targetDir != null) {
+                // 删除Docker镜像
+                ProcessBuilder dockerDeleteProcess = new ProcessBuilder(
+                        "docker", "rmi", "-f", "model-evaluator-" + submissionId
+                );
+                dockerDeleteProcess.directory(new File(targetDir.toString()));
+                try {
+                    executeProcessWithLogging(dockerDeleteProcess, "删除Docker镜像" + submissionId);
+                } catch (IOException | InterruptedException e) {
+                    log.error("删除Docker镜像失败: {}", e.getMessage());
+                } catch (Exception e) {
+                    log.error("删除镜像异常: {}", e.getMessage());
                 }
-            } catch (IOException e) {
-                log.error("删除临时文件失败: {} {}", e, e.getMessage());
+
+                // 删除解压的临时文件
+                try {
+                    FileSystemUtils.deleteRecursively(targetDir);
+                } catch (IOException e) {
+                    log.error("删除临时文件失败: {} {}", e, e.getMessage());
+                }
             }
             log.info("评估结束: {}", submissionId);
         }
@@ -147,74 +181,72 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             log.error("解压失败", e);
             throw new IOException("模型文件解压失败" + e.getMessage(), e);
         }
+
+        // 清空prediction_result目录
+        Path predictionResultDir = targetDir.resolve("prediction_result");
+        if (Files.exists(predictionResultDir) && Files.isDirectory(predictionResultDir)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(predictionResultDir)) {
+                if (stream.iterator().hasNext()) {
+                    FileSystemUtils.deleteRecursively(predictionResultDir);
+                    Files.createDirectories(predictionResultDir);
+//                    log.info("已清空prediction_result目录: {}", predictionResultDir);
+                }
+            } catch (IOException e) {
+                log.error("清理prediction_result目录失败: {}", e.getMessage());
+                throw new IOException("清理prediction_result目录失败: " + e.getMessage(), e);
+            }
+        }
     }
-
-    // 生成Dockerfile
-    private void generateDockerfile(Path targetDir) throws IOException {
-        // TODO 读取requirements.txt中的python版本
-        List<String> dockerfileContent = List.of(
-                "FROM python:3.8-slim",
-                "WORKDIR /app",
-                "COPY . .",
-                "RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple",
-                "CMD [\"python\", \"code/predict.py\", \"--testdataset_path\", \"/mnt/data\"]"
-        );
-
-        Path dockerfilePath = targetDir.resolve("Dockerfile");
-        Files.write(dockerfilePath, dockerfileContent, StandardOpenOption.CREATE);
-    }
-
 
     @Override
-    public void executeDocker(String datasetPath, Path targetDir) throws InterruptedException, IOException {
-        // TODO 检查代码，并添加指定csv文件输出位置的逻辑
-        // 创建结果目录（保持与Python执行逻辑相同的路径）
+    public void executeDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException {
+        //获取是否使用cuda，结果可能为cpu、cuda
+        Path configPath = targetDir.resolve("environment.json");
+        ObjectMapper mapper = new ObjectMapper();
+        EvalP2DServiceImpl.EnvironmentConfig config = mapper.readValue(configPath.toFile(), EvalP2DServiceImpl.EnvironmentConfig.class);
+        String hardwareType = config.getHardware().getType();
+
+        // 获取结果目录（保持与Python执行逻辑相同的路径）
         Path resultDir = targetDir.resolve("prediction_result");
 //        Files.createDirectories(resultDir);
 
         // 构建Docker镜像
-        ProcessBuilder buildProcess = new ProcessBuilder(
-                "docker", "build", "-t", "model-eval", "."
+        ProcessBuilder dockerBuildProcess = new ProcessBuilder(
+                "docker", "build", "--quiet", "-t", "model-evaluator-" + submissionId, "."
         );
+        // docker build --quiet -t model-evaluator .
+        dockerBuildProcess.directory(new File(targetDir.toString()));
 
-        // 运行容器时挂载数据卷（无需复制数据集）
-        ProcessBuilder runProcess = new ProcessBuilder(
-                "docker", "run", "--rm",
-                "-v", datasetPath + ":/mnt/data",          // 挂载测试数据集
-                "-v", targetDir + ":/app",  // 宿主机解压目录映射到容器工作目录
-                "-v", resultDir + ":/app/prediction_result", // 挂载结果目录
-                "model-eval"
-        );
-        executeProcessWithLogging(buildProcess, "Docker构建");
-        executeProcessWithLogging(runProcess, "Docker运行");
+        // 运行容器时挂载数据卷和用作输出的空目录
+        ProcessBuilder dockeRunProcess;
+        if ("cuda".equals(hardwareType)) { // 根据比赛配置判断是否需要GPU
+            dockeRunProcess = new ProcessBuilder(
+                    "docker", "run", "--quiet", "--rm", "--gpus", "all",
+                    "-v", datasetPath + ":/app/data:ro",
+                    "-v", resultDir + ":/app/prediction_result",
+                    "model-evaluator-" + submissionId
+            );
+        } else {
+            dockeRunProcess = new ProcessBuilder(
+                    "docker", "run", "--rm",
+                    "-v", datasetPath + ":/app/data:ro",
+                    "-v", resultDir + ":/app/prediction_result",
+                    "model-evaluator-" + submissionId
+            );
+        }
+        // docker run --rm --gpus all -v C:\Users\ShallowTrace\Desktop\工行实习\用户上传文件_分类任务测试样例1\测试集及标签:/app/data:ro -v C:\Users\ShallowTrace\Desktop\工行实习\用户上传文件_分类任务测试样例1\team1\prediction_result:/app/prediction_result model-evaluator
+        // docker run --rm -v C:\Users\ShallowTrace\Desktop\工行实习\用户上传文件_分类任务测试样例1\测试集及标签\data:/app/data:ro -v C:\Users\ShallowTrace\Desktop\工行实习\用户上传文件_分类任务测试样例1\team1\prediction_result:/app/prediction_result model-evaluator
+        dockeRunProcess.directory(new File(targetDir.toString()));
+
+        executeProcessWithLogging(dockerBuildProcess, "Docker构建" + submissionId);
+        executeProcessWithLogging(dockeRunProcess, "Docker运行" + submissionId);
     }
 
-    // 通用的进程执行方法（重构原有Python执行逻辑）
+    // ProcessBuilder的执行、输出读取、错误处理通用方法
     private void executeProcessWithLogging(ProcessBuilder processBuilder, String processName)
             throws IOException, InterruptedException {
 
-        processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log.info("{} 输出: {}", processName, line);
-            }
-        }
-
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new PythonExecuteException(processName + "失败，退出码: " + exitCode);
-        }
-    }
-
-    private void executePythonScript(String datasetPath, Path targetDir) throws InterruptedException, IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "python",
-                "code/predict.py",
-                "--testdataset_path", datasetPath); // 传递测试集路径给Python脚本
-        processBuilder.directory(new File(targetDir.toString()));
+//        processBuilder.redirectErrorStream(true);
 
         int exitCode = -1;
         BufferedReader errorReader = null;
@@ -225,11 +257,11 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
             String errorLine;
             while ((errorLine = errorReader.readLine()) != null) {
-                log.error("Python脚本错误: {}", errorLine);
+                log.error("{} 输出: {}", processName, errorLine);
             }
             exitCode = process.waitFor();
             if (exitCode != 0) {
-                throw new PythonExecuteException("Python脚本执行失败，退出码: " + exitCode);
+                throw new DockerException(processName + "失败，退出码: " + exitCode);
             }
         } finally {
             if (errorReader != null) {
@@ -245,8 +277,18 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         }
     }
 
+    private void executePythonScript(String datasetPath, Path targetDir) throws InterruptedException, IOException {
+        ProcessBuilder pythonProcess = new ProcessBuilder(
+                "python",
+                "code/predict.py",
+                "--testdataset_path", datasetPath); // 传递测试集路径给Python脚本
+        pythonProcess.directory(new File(targetDir.toString()));
+
+        executeProcessWithLogging(pythonProcess, "Python运行");
+    }
+
     @Override
-    public EvaluationResultDO processEvaluationResult(String predictCsvPath, String groundTruthCsvPath, Long submissionId) throws IOException{
+    public EvaluationResultDO processClassificationEvaluationResult(String predictCsvPath, String groundTruthCsvPath, Long submissionId) throws IOException{
         // 读取 CSV 文件
         List<String> predictedLabels;
         List<String> trueLabels;
@@ -256,7 +298,6 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         } catch (IOException | CsvException e) {
             throw new RuntimeException("csv文件错误：" + e.getMessage());
         }
-
 
         // 计算评估指标
         double accuracy = calculateAccuracy(predictedLabels, trueLabels);
@@ -298,6 +339,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         return (double) correct / predicted.size();
     }
 
+    // 一般二分类才使用recall，precision，f1-score
     private List<Double> calculatePrecisionRecallF1Score(List<String> predicted, List<String> actual) {
         int truePositives = 0;
         int falsePositives = 0;
@@ -325,9 +367,9 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         evalExecutor.execute(() -> {
             try {
                 // 实际评估逻辑
-                if (submitType.equals("MODEL")) {
-                    this.evaluateModel(submissionId);
-                }
+//                if (submitType.equals("MODEL")) {
+                this.evaluateModel(submissionId, submitType);
+//                }
 //                else if (submitType.equals("DOCKER")) {
 //                    this.evaluateDocker(submissionId);
 //                }

@@ -25,7 +25,6 @@ public class EvalDockerServiceImpl {
                     "docker", "build", "-t", "my-predict-app",
                     "-f", "/mnt/d/CZY/ModelEvalPlat/Dockerfile", "."
             ).redirectErrorStream(true).start(); // 合并错误流和输出流
-
             // 实时捕获构建输出
             logProcessOutput(buildProcess, "BUILD");
             int buildExitCode = buildProcess.waitFor();
