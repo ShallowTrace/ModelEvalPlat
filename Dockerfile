@@ -12,7 +12,8 @@ WORKDIR /app/data
 COPY requirements.txt .
 
 # 安装Python依赖（添加--no-cache-dir避免缓存占用空间）
-RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
+
 
 # 复制整个项目代码
 COPY . .
