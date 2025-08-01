@@ -92,7 +92,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 executeP2DDocker(datasetPath, targetDir, submissionId);
             }
             else if (submitType.equals("DOCKER")) {
-                evalDockerService.executeDocker(competitionId);
+                evalDockerService.executeDocker(datasetPath,competitionId);
             }
 
 

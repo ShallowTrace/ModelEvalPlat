@@ -36,7 +36,7 @@ public class CompetitionAdminController {
     private final CompetitionRegistrationService competitionRegistrationService;
 //     GET http://127.0.0.1:8002/api/competitions
     //    curl -X GET "http://127.0.0.1:8002/api/competitions"
-    @GetMapping("/api/competitions")
+    @GetMapping("/competitions")
     @ResponseBody
     public List<CompetitionDO> selectAllCompetition(){
         return competitionService.selectAllCompetition();
@@ -54,7 +54,7 @@ public class CompetitionAdminController {
 //                "daily_submission_limit": 6,
 //                "created_at": "2025-08-01T09:00:00"
 //    }'
-    @PostMapping("/api/competitions")
+    @PostMapping("/competitions")
     @ResponseBody
     public int publishCompetition(@RequestBody CompetitionDO competition){
         return competitionService.publishCompetition(competition);
@@ -63,7 +63,7 @@ public class CompetitionAdminController {
 //     DELETE http://127.0.0.1:8082/api/competitions/{competitionId}
 //        curl -X DELETE "http://127.0.0.1:8002/api/competitions/2" \
 //                -H "Content-Type: application/json"
-    @DeleteMapping("/api/competitions/{competitionId}")
+    @DeleteMapping("/competitions/{competitionId}")
     @ResponseBody
     public int deleteCompetition(@PathVariable Long competitionId){
         return competitionService.deleteCompetition(competitionId);
@@ -71,7 +71,7 @@ public class CompetitionAdminController {
 
     // PUT http://127.0.0.1:8082/api/competitions/{competitionId}/content
 //     curl -X PUT "http://127.0.0.1:8002/api/competitions/1/content" -H "Content-Type: application/json" -d "重庆大学"
-    @PutMapping("/api/competitions/{competitionId}/content")
+    @PutMapping("/competitions/{competitionId}/content")
     @ResponseBody
     public int updateCompetitionDescription(@PathVariable Long competitionId,  @RequestBody String content){
         return competitionService.updateCompetitionDescription(competitionId,content);
@@ -79,7 +79,7 @@ public class CompetitionAdminController {
 
 //     PUT http://127.0.0.1:8082/api/competitions/{competitionId}/startTime
 //     curl -X PUT "http://127.0.0.1:8002/api/competitions/1/startTime" -H "Content-Type: application/json" -d '"2023-10-01T15:30:09"'
-    @PutMapping("/api/competitions/{competitionId}/startTime")
+    @PutMapping("/competitions/{competitionId}/startTime")
     @ResponseBody
     public int updateCompetitionStartTime(@PathVariable Long competitionId,  @RequestBody LocalDateTime startTime){
         return competitionService.updateCompetitionStartTime(competitionId,startTime);
@@ -87,13 +87,13 @@ public class CompetitionAdminController {
 
     // PUT http://127.0.0.1:8002/api/competitions/{competitionId}/endTime
 //     curl -X PUT "http://127.0.0.1:8002/api/competitions/1/endTime" -H "Content-Type: application/json" -d '"2023-10-01T15:30:09"'
-    @PutMapping("/api/competitions/{competitionId}/endTime")
+    @PutMapping("/competitions/{competitionId}/endTime")
     @ResponseBody
     public int updateCompetitionEndTime(@PathVariable Long competitionId,  @RequestBody LocalDateTime endTime){
         return competitionService.updateCompetitionEndTime(competitionId,endTime);
     }
 
-    @PostMapping("/api/registrations/{userId}/{competitionId}")
+    @PostMapping("/registrations/{userId}/{competitionId}")
     public int registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
     {
         return competitionRegistrationService.registerCompetition(userId,competitionId);

@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
-@RequestMapping("/api/competitions")
+@RequestMapping("/competitions")
 public class SubmissionController {
 
     @Autowired
