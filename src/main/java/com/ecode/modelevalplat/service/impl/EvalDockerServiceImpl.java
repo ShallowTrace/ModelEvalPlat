@@ -1,6 +1,7 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.ecode.modelevalplat.service.CompetitionService;
+import com.ecode.modelevalplat.service.EvalDockerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,11 +12,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 @Service
-public class EvalDockerServiceImpl {
+public class EvalDockerServiceImpl implements EvalDockerService {
     private static final Logger logger = LoggerFactory.getLogger(EvalDockerServiceImpl.class);
 
     @Autowired
     private CompetitionService competitionService;
+
+    @Override
     public void evaluate(Long id) {
         String customSubdir = competitionService.selectPath(id);
 
