@@ -21,6 +21,6 @@ public class EvaluationController {
     @GetMapping("/run/{id}")
     public void runEvaluation(@PathVariable Long id) {
         // 配置客户端
-        dockerService.evaluate(id);
+        dockerService.executeDocker(id);
     }
 }

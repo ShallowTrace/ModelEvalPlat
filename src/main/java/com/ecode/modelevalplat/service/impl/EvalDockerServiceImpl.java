@@ -19,7 +19,7 @@ public class EvalDockerServiceImpl implements EvalDockerService {
     private CompetitionService competitionService;
 
     @Override
-    public void evaluate(Long id) {
+    public void executeDocker(Long id) {
         String customSubdir = competitionService.selectPath(id);
 
         try {

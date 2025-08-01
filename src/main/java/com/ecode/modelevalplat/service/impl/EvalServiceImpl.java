@@ -11,9 +11,9 @@ import com.ecode.modelevalplat.common.exception.DockerException;
 import com.ecode.modelevalplat.common.exception.PythonExecuteException;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
 import com.ecode.modelevalplat.dao.mapper.SubmissionMapper;
+import com.ecode.modelevalplat.service.EvalDockerService;
 import com.ecode.modelevalplat.service.EvalP2DService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.command.RemoveImageCmd;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -26,8 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -47,7 +45,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
     private final CompetitionMapper competitionMapper;
 
     private final EvalP2DService evalP2DService;
-    private final EvalDockerServiceImpl evalDockerService;
+    private final EvalDockerService evalDockerService;
 
     // 线程池配置
     private final ThreadPoolExecutor evalExecutor = new ThreadPoolExecutor(
@@ -91,10 +89,10 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             // executePythonScript(datasetPath, targetDir);
             if (submitType.equals("MODEL")) {
                 evalP2DService.generateDockerfile(targetDir);
-                executeDocker(datasetPath, targetDir, submissionId);
+                executeP2DDocker(datasetPath, targetDir, submissionId);
             }
             else if (submitType.equals("DOCKER")) {
-                evalDockerService.evaluate(competitionId);
+                evalDockerService.executeDocker(competitionId);
             }
 
 
@@ -199,7 +197,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
     }
 
     @Override
-    public void executeDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException {
+    public void executeP2DDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException {
         //获取是否使用cuda，结果可能为cpu、cuda
         Path configPath = targetDir.resolve("environment.json");
         ObjectMapper mapper = new ObjectMapper();

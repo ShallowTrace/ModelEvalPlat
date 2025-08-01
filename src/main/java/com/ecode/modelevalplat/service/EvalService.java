@@ -26,7 +26,7 @@ public interface EvalService extends IService<EvaluationResultDO> {
      * @param datasetPath 测试数据集路径
      * @param targetDir   指定的工作目录
      */
-    public void executeDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException;
+    void executeP2DDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException;
 
     /**
      * 分类任务：处理评估结果并构建评估结果对象，但暂不存入数据库
