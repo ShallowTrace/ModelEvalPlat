@@ -105,6 +105,7 @@ public class EvalP2DServiceImpl implements EvalP2DService {
             lines.add("    ln -sf /usr/bin/pip3 /usr/bin/pip");
             lines.add("");
         } else {
+            // 非CUDA版本的基础镜像使用的python，已经默认安装
             lines.add("RUN apt-get update && \\");
             lines.add("    apt-get install -y --no-install-recommends \\");
             lines.add("    python3-pip \\");
