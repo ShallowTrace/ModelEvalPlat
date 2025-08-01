@@ -73,7 +73,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             if (modelPath == null || modelPath.isEmpty()) {
                 throw new RuntimeException("模型路径不存在 for submission: " + submissionId);
             }
-
+            System.out.println("测试git合并");
             // 2. 解压ZIP文件
             Path originalZipPath = Paths.get(modelPath);
             // 生成解压目录路径targetDir（与ZIP文件同名不带扩展名）
@@ -109,8 +109,8 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
-        } catch (PythonExecuteException e) {
-            throw new PythonExecuteException("python进程错误：" + e.getMessage());
+//        } catch (PythonExecuteException e) {
+//            throw new PythonExecuteException("python进程错误：" + e.getMessage());
         } catch (DockerException e) {
             throw new DockerException("docker进程错误：" + e.getMessage());
         } catch (RuntimeException e) {
