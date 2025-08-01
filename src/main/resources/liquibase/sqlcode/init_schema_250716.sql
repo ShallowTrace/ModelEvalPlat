@@ -19,7 +19,7 @@ create table competitions
     description            text                                   null comment '比赛介绍',
     start_time             datetime                               not null comment '开始时间',
     end_time               datetime                               not null comment '结束时间',
-    path                   varchar(255)                           null comment '测试数据和结果路径（文件/URL）',
+    path                   varchar(255)                           null comment '测试集和真实值csv路径', -- 测试集路径在数据库保存的测试集路径下的data目录下，真实值csv在数据库保存的测试集路径下的Ground_Truth.csv
     is_active              tinyint(1)   default 1                 not null comment '是否激活',
     participant_count      int unsigned default '0'               not null comment '报名人数',
     daily_submission_limit int          default 5                 not null comment '每日提交次数限制',
@@ -46,7 +46,7 @@ CREATE TABLE `submissions` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
     `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
     `competition_id` BIGINT UNSIGNED NOT NULL COMMENT '比赛ID',
-    `model_path` VARCHAR(255) NOT NULL COMMENT '模型文件路径',
+    `model_path` VARCHAR(255) NOT NULL COMMENT '提交文件路径',
     `status` ENUM('PENDING', 'PROCESSING', 'SUCCESS', 'FAILED') NOT NULL COMMENT '评测状态',
     `submit_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
     PRIMARY KEY (`id`),
@@ -60,7 +60,7 @@ CREATE TABLE `evaluation_results` (
     `user_id` BIGINT UNSIGNED NOT NULL COMMENT '提交人ID',
     `competition_id` BIGINT UNSIGNED NOT NULL COMMENT '比赛ID',
     `submit_time` DATETIME NOT NULL COMMENT '提交时间',
-    `result_json` TEXT COMMENT '评估结果（JSON格式）',
+    `result_json` TEXT COMMENT '评估指标（JSON格式）',
     `score` FLOAT NOT NULL COMMENT '总分或主要指标',
     PRIMARY KEY (`id`),
     INDEX `idx_comp_user_score` (competition_id, user_id, score)

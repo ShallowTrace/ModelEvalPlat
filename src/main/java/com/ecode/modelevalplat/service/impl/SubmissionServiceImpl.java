@@ -16,6 +16,8 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -47,6 +49,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     // TODO 用户鉴权
     public ResVo<SubmissionResp> submitModel(Long userId, Long competitionId, String submitType, MultipartFile file) {
         String originalFilename = file.getOriginalFilename();
@@ -76,6 +79,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             }
 
             // 4. 比赛状态校验
+            // TODO 改为使用数据库的is_active字段来校验
             CompetitionDO competition = competitionMapper.findById(competitionId);
             Instant now = Instant.now();
             Instant start = competition.getStartTime().toInstant();
@@ -120,9 +124,6 @@ public class SubmissionServiceImpl implements SubmissionService {
             File destFile = new File(persistPath);
             destFile.getParentFile().mkdirs();
 
-            // 保存文件
-            file.transferTo(destFile.toPath());
-
             // 9. 在mysql数据库中创建提交记录
             SubmissionDO submission = new SubmissionDO();
             submission.setUserId(userId);
@@ -132,13 +133,18 @@ public class SubmissionServiceImpl implements SubmissionService {
             submission.setSubmitTime(new Date());
             submissionMapper.insert(submission);
 
+            // 10. 最后保存文件（如果失败会触发事务回滚）
+            file.transferTo(destFile.toPath());
+
             return ResVo.ok(SubmissionResp.success(submission.getId(), originalFilename));
 //            return SubmissionResp.success(submission.getId(), originalFilename);
 
         } catch (IOException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return ResVo.fail(StatusEnum.SAVE_FILE_FAILED, e.getMessage());
 //            return SubmissionResp.failure("文件存储失败: " + e.getMessage(), "FILE_STORAGE_ERROR", originalFilename);
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return ResVo.fail(StatusEnum.UNEXPECT_ERROR, e.getMessage());
 //            return SubmissionResp.failure("系统错误: " + e.getMessage(), "SYSTEM_ERROR", originalFilename);
         }
@@ -167,6 +173,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     public ResVo<SubmissionResp> handleModelFile(MultipartFile file) {
         try (ZipInputStream zipIn = new ZipInputStream(file.getInputStream())) {
             int predictPyCount = 0;
+            int environmentJsonCount = 0;
             int requirementsTxtCount = 0;
             boolean hasPredictionResultDir = false;
 
@@ -194,12 +201,19 @@ public class SubmissionServiceImpl implements SubmissionService {
                     if (entryName.equals("requirements.txt")) {
                         requirementsTxtCount++;
                     }
+                    if(entryName.equals("environment.json")){
+                        // 检查根目录的environment.json
+                        environmentJsonCount++;
+                    }
                 }
             }
 
             // 验证文件结构
             if (predictPyCount == 0) {
                 return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包code目录缺少predict.py文件");
+            }
+            if (environmentJsonCount == 0) {
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少environment.json文件");
             }
             if (requirementsTxtCount == 0) {
                 return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少requirements.txt文件");
