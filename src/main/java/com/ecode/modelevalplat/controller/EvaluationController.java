@@ -8,19 +8,18 @@ import java.util.Set;
 
 //https://localhost:8002/api/eval/run/{1}
 @RestController
-@RequestMapping("/api/eval")
+@RequestMapping("/eval")
 public class EvaluationController {
     @Autowired
     private final EvalDockerServiceImpl dockerService;
-
 
     public EvaluationController(EvalDockerServiceImpl dockerService) {
         this.dockerService = null;
     }
 
-    @GetMapping("/run/{id}")
-    public void runEvaluation(@PathVariable Long id) {
-        // 配置客户端
-        dockerService.evaluate(id);
-    }
+//    @GetMapping("/run/{id}")
+//    public void runEvaluation(@PathVariable Long id) {
+//        // 配置客户端
+//        dockerService.executeDocker(id);
+//    }
 }

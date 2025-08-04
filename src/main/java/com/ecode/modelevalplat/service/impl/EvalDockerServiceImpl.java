@@ -1,6 +1,7 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.ecode.modelevalplat.service.CompetitionService;
+import com.ecode.modelevalplat.service.EvalDockerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,20 +10,23 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 
 @Service
-public class EvalDockerServiceImpl {
+public class EvalDockerServiceImpl implements EvalDockerService {
     private static final Logger logger = LoggerFactory.getLogger(EvalDockerServiceImpl.class);
 
     @Autowired
     private CompetitionService competitionService;
-    public void evaluate(Long id) {
-        String customSubdir = competitionService.selectPath(id);
+
+    @Override
+    public void executeDocker(String datasetPath, Path targetDir, Long id, Long submissionId) {
+//        String customSubdir = competitionService.selectPath(id);
 
         try {
             // 1. 构建Docker镜像
             Process buildProcess = new ProcessBuilder(
-                    "docker", "build", "-t", "my-predict-app",
+                    "docker", "build", "-t", "model-evaluator-"+submissionId,
                     "-f", "/mnt/d/CZY/ModelEvalPlat/Dockerfile", "."
             ).redirectErrorStream(true).start(); // 合并错误流和输出流
             // 实时捕获构建输出
@@ -35,13 +39,16 @@ public class EvalDockerServiceImpl {
             }
 
             logger.info("✅ Docker构建成功!");
-
+            // 获取结果目录（保持与Python执行逻辑相同的路径）
+            Path resultDir = targetDir.resolve("prediction_result");
             // 2. 运行Docker容器
             Process runProcess = new ProcessBuilder(
                     "docker", "run", "--rm",
                     "-v", "/mnt/d/CZY/ModelEvalPlat:/app/data", // 使用绝对路径
-                    "-e", "DATA_DIR=/app/data/" + customSubdir,
-                    "my-predict-app"
+                    "-v",resultDir+":/app/prediction_result",
+
+                    "-e", "DATA_DIR=/app/data/" + datasetPath,
+                    "model-evaluator-"+submissionId
             ).redirectErrorStream(true).start();
 
             // 实时捕获运行输出

@@ -11,9 +11,9 @@ import com.ecode.modelevalplat.common.exception.DockerException;
 import com.ecode.modelevalplat.common.exception.PythonExecuteException;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
 import com.ecode.modelevalplat.dao.mapper.SubmissionMapper;
+import com.ecode.modelevalplat.service.EvalDockerService;
 import com.ecode.modelevalplat.service.EvalP2DService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.command.RemoveImageCmd;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -26,8 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -47,7 +45,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
     private final CompetitionMapper competitionMapper;
 
     private final EvalP2DService evalP2DService;
-    private final EvalDockerServiceImpl evalDockerService;
+    private final EvalDockerService evalDockerService;
 
     // 线程池配置
     private final ThreadPoolExecutor evalExecutor = new ThreadPoolExecutor(
@@ -79,6 +77,8 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             // 生成解压目录路径targetDir（与ZIP文件同名不带扩展名）
             String targetDirName = originalZipPath.getFileName().toString().replace(".zip", "");
             targetDir = originalZipPath.getParent().resolve(targetDirName);
+            System.out.println("modelPath:"+modelPath);
+            System.out.println("targetDir:"+targetDir);
             unzipModelFile(modelPath, targetDir);
 
             // 3. 获取测试集路径和真实值csv路径
@@ -91,15 +91,16 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             // executePythonScript(datasetPath, targetDir);
             if (submitType.equals("MODEL")) {
                 evalP2DService.generateDockerfile(targetDir);
-                executeDocker(datasetPath, targetDir, submissionId);
+                executeP2DDocker(datasetPath, targetDir, submissionId);
             }
             else if (submitType.equals("DOCKER")) {
-                evalDockerService.evaluate(competitionId);
+                evalDockerService.executeDocker(datasetPath,targetDir,competitionId,submissionId);
             }
 
 
             // 5. 如果运行成功，根据预测结果csv计算得分
             String predictCsvPath = targetDir.resolve("prediction_result").resolve("result.csv").toString();
+            System.out.println("第一个"+predictCsvPath+"第二个"+groundTruthCsvPath);
             evaluationResult = processClassificationEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
 
             // 评估执行完毕，无异常，更新提交状态为SUCCESS
@@ -189,17 +190,20 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 if (stream.iterator().hasNext()) {
                     FileSystemUtils.deleteRecursively(predictionResultDir);
                     Files.createDirectories(predictionResultDir);
-//                    log.info("已清空prediction_result目录: {}", predictionResultDir);
+                    log.info("已清空prediction_result目录: {}", predictionResultDir);
                 }
             } catch (IOException e) {
                 log.error("清理prediction_result目录失败: {}", e.getMessage());
                 throw new IOException("清理prediction_result目录失败: " + e.getMessage(), e);
             }
+            finally{
+                System.out.println("清理prediction_result目录成功");
+            };
         }
     }
 
     @Override
-    public void executeDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException {
+    public void executeP2DDocker(String datasetPath, Path targetDir, Long submissionId) throws InterruptedException, IOException {
         //获取是否使用cuda，结果可能为cpu、cuda
         Path configPath = targetDir.resolve("environment.json");
         ObjectMapper mapper = new ObjectMapper();
@@ -208,7 +212,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
         // 获取结果目录（保持与Python执行逻辑相同的路径）
         Path resultDir = targetDir.resolve("prediction_result");
-//        Files.createDirectories(resultDir);
+        Files.createDirectories(resultDir);
 
         // 构建Docker镜像
         ProcessBuilder dockerBuildProcess = new ProcessBuilder(

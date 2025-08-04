@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/history")
+@RequestMapping("/history")
 public class HistoryController {
     private final HistoryService historyService;
 

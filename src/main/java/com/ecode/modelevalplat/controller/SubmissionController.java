@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
-@RequestMapping("/api/competitions")
+@RequestMapping("/competitions")
 public class SubmissionController {
 
     @Autowired
@@ -37,10 +37,10 @@ public class SubmissionController {
         // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
         ResVo<SubmissionResp> resp;
         if (submitType.equals("MODEL")) {
-            resp = submissionService.submitModel(1001L, competitionId, submitType, modelFile);
+            resp = submissionService.submitModel(1L, competitionId, submitType, modelFile);
         }
         else {
-            resp = submissionService.submitModel(1001L, competitionId, submitType, dockerFile);
+            resp = submissionService.submitModel(1L, competitionId, submitType, dockerFile);
         }
 
         // 如果提交成功，则开始异步评测
