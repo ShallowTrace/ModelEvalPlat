@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com
 COPY . .
 
 # 修改后的CMD（使用环境变量）
-CMD ["sh", "-c", "echo '正在启动脚本...'; python predict.py --dir ${DATA_DIR:-/app/data};ls;pwd"]
+CMD ["sh", "-c", "echo '正在启动脚本...'; python -u predict.py --dir ${DATA_DIR:-/app/data};ls;pwd"]
 #CMD ["sh", "-c", "echo '正在启动脚本...'"]
 
 # 如果需要暴露端口（根据实际服务配置）

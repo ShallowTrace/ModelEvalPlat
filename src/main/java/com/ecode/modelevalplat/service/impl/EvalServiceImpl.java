@@ -77,6 +77,8 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             // 生成解压目录路径targetDir（与ZIP文件同名不带扩展名）
             String targetDirName = originalZipPath.getFileName().toString().replace(".zip", "");
             targetDir = originalZipPath.getParent().resolve(targetDirName);
+            System.out.println("modelPath:"+modelPath);
+            System.out.println("targetDir:"+targetDir);
             unzipModelFile(modelPath, targetDir);
 
             // 3. 获取测试集路径和真实值csv路径
@@ -92,7 +94,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 executeP2DDocker(datasetPath, targetDir, submissionId);
             }
             else if (submitType.equals("DOCKER")) {
-                evalDockerService.executeDocker(datasetPath,competitionId);
+                evalDockerService.executeDocker(datasetPath,targetDir,competitionId,submissionId);
             }
 
 
@@ -188,12 +190,15 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 if (stream.iterator().hasNext()) {
                     FileSystemUtils.deleteRecursively(predictionResultDir);
                     Files.createDirectories(predictionResultDir);
-//                    log.info("已清空prediction_result目录: {}", predictionResultDir);
+                    log.info("已清空prediction_result目录: {}", predictionResultDir);
                 }
             } catch (IOException e) {
                 log.error("清理prediction_result目录失败: {}", e.getMessage());
                 throw new IOException("清理prediction_result目录失败: " + e.getMessage(), e);
             }
+            finally{
+                System.out.println("清理prediction_result目录成功");
+            };
         }
     }
 
@@ -207,7 +212,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
         // 获取结果目录（保持与Python执行逻辑相同的路径）
         Path resultDir = targetDir.resolve("prediction_result");
-//        Files.createDirectories(resultDir);
+        Files.createDirectories(resultDir);
 
         // 构建Docker镜像
         ProcessBuilder dockerBuildProcess = new ProcessBuilder(

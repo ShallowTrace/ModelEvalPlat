@@ -15,7 +15,7 @@ INSERT INTO competitions (
              '社会大学',
              '2023-10-01 15:30:01',
              '2025-10-01 15:30:19',
-             'C:\\Users\\ShallowTrace\\Desktop\\工行实习\\用户上传文件_分类任务测试样例1\\测试集及标签',
+             '/home/czy/',
              1,
              2,
              3,
