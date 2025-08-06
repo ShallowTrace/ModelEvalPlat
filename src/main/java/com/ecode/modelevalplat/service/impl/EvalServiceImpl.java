@@ -196,9 +196,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 log.error("清理prediction_result目录失败: {}", e.getMessage());
                 throw new IOException("清理prediction_result目录失败: " + e.getMessage(), e);
             }
-            finally{
-                System.out.println("清理prediction_result目录成功");
-            };
+
         }
     }
 

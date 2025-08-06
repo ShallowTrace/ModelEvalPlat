@@ -3,3 +3,7 @@
 .vscode/
 src/main/java/com/ecode/modelevalplat/controller/EvaluationController.java
 model.zip
+Dockerfile
+predict.py
+requirements.txt
+src/main/test
