@@ -51,5 +51,8 @@ public interface SubmissionMapper {
             "AND DATE(submit_time) = CURRENT_DATE")
     int countTodaySubmissions(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
 
+    @Select("SELECT COUNT(*) FROM submissions WHERE user_id=#{userId} AND competition_id=#{competitionId} " +
+            "AND (status='PENDING' OR status='PROCESSING')")
+    int countConcurrentSubmissions(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
 
 }

@@ -1,5 +1,7 @@
 # 模型文件保存路径
-MODELFILE_STORAGE_PATH: /home/czy
+MODELFILE_STORAGE_PATH: C:\Users\ShallowTrace\Desktop\submission
+# 最大并发提交次数
+MAX_CONCURRENT_SUBMISSIONS: 3
 
 server:
   port: 8002
@@ -9,7 +11,7 @@ server:
 
 spring:
   datasource:
-    username: czy
+    username: root
     password: 123456
     url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -27,7 +29,7 @@ spring:
 
   liquibase:
     change-log: classpath:liquibase/master.xml
-    enabled: false # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
+    enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
     drop-first: false # 为 true 的话每次启动项目会删除所有数据库表
 
 # 默认的数据库名
