@@ -71,14 +71,13 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             if (modelPath == null || modelPath.isEmpty()) {
                 throw new RuntimeException("模型路径不存在 for submission: " + submissionId);
             }
-            System.out.println("测试git合并");
             // 2. 解压ZIP文件
             Path originalZipPath = Paths.get(modelPath);
             // 生成解压目录路径targetDir（与ZIP文件同名不带扩展名）
             String targetDirName = originalZipPath.getFileName().toString().replace(".zip", "");
             targetDir = originalZipPath.getParent().resolve(targetDirName);
-            System.out.println("modelPath:"+modelPath);
-            System.out.println("targetDir:"+targetDir);
+//            System.out.println("modelPath:"+modelPath);
+//            System.out.println("targetDir:"+targetDir);
             unzipModelFile(modelPath, targetDir);
 
             // 3. 获取测试集路径和真实值csv路径
@@ -100,7 +99,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
             // 5. 如果运行成功，根据预测结果csv计算得分
             String predictCsvPath = targetDir.resolve("prediction_result").resolve("result.csv").toString();
-            System.out.println("第一个"+predictCsvPath+"第二个"+groundTruthCsvPath);
+//            System.out.println("第一个"+predictCsvPath+"第二个"+groundTruthCsvPath);
             evaluationResult = processClassificationEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
 
             // 评估执行完毕，无异常，更新提交状态为SUCCESS
@@ -196,9 +195,6 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 log.error("清理prediction_result目录失败: {}", e.getMessage());
                 throw new IOException("清理prediction_result目录失败: " + e.getMessage(), e);
             }
-            finally{
-                System.out.println("清理prediction_result目录成功");
-            };
         }
     }
 
@@ -216,7 +212,8 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
         // 构建Docker镜像
         ProcessBuilder dockerBuildProcess = new ProcessBuilder(
-                "docker", "build", "--quiet", "-t", "model-evaluator-" + submissionId, "."
+//                "docker", "build", "--quiet", "-t", "model-evaluator-" + submissionId, "."
+                "docker", "build", "-t", "model-evaluator-" + submissionId, "."
         );
         // docker build --quiet -t model-evaluator .
         dockerBuildProcess.directory(new File(targetDir.toString()));

@@ -37,6 +37,8 @@ public class SubmissionServiceImpl implements SubmissionService {
     // 提交的文件使用固定存储路径（可以根据需要修改）
     @Value("${MODELFILE_STORAGE_PATH}")
     private String MODELFILE_STORAGE_PATH;
+    @Value("${MAX_CONCURRENT_SUBMISSIONS}")
+    private int MAX_CONCURRENT_SUBMISSIONS;
 
     @Autowired
     private UserCompetitionMapper userCompetitionMapper;
@@ -89,10 +91,13 @@ public class SubmissionServiceImpl implements SubmissionService {
 //                return SubmissionResp.failure("比赛未在进行中", "COMPETITION_NOT_ACTIVE", originalFilename);
             }
 
-            // 5. 每日配额校验
-            if (checkDailyQuota(userId, competitionId) >= competition.getDailySubmissionLimit()) {
-                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "今日提交次数已达上限");
-//                return SubmissionResp.failure("今日提交次数已达上限", "QUOTA_EXCEEDED", originalFilename);
+            // 5. 每日提交配额校验与并发提交配额校验
+            int MAX_DAILY_SUBMISSIONS = competition.getDailySubmissionLimit();
+            if (checkDailyQuota(userId, competitionId) >= MAX_DAILY_SUBMISSIONS) {
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, String.format("今日提交次数已达上限(%s)", MAX_DAILY_SUBMISSIONS));
+            }
+            if (submissionMapper.countConcurrentSubmissions(userId, competitionId) >= MAX_CONCURRENT_SUBMISSIONS) {
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, String.format("并发提交次数已达上限(%s)", MAX_CONCURRENT_SUBMISSIONS));
             }
 
             // 6. 文件扩展名校验、检查文件魔数（真实文件类型）
@@ -233,14 +238,22 @@ public class SubmissionServiceImpl implements SubmissionService {
     public ResVo<SubmissionResp> handleDockerFile(MultipartFile file) {
         try (ZipInputStream zipIn = new ZipInputStream(file.getInputStream())) {
             int dockerfileCount = 0;
+            boolean hasPredictionResultDir = false;
 
             // 遍历ZIP文件条目
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
                 String entryName = entry.getName();
 
-                // 跳过目录和嵌套文件（只检查根目录）
-                if (entry.isDirectory() || entryName.contains("/")) {
+                if (entry.isDirectory()) {
+                    if (entryName.equals("prediction_result/")) {
+                        hasPredictionResultDir = true;
+                    }
+                    continue;
+                }
+
+                // 跳过嵌套文件（只检查根目录）
+                if (entryName.contains("/")) {
                     continue;
                 }
 
@@ -254,6 +267,9 @@ public class SubmissionServiceImpl implements SubmissionService {
             if (dockerfileCount == 0) {
                 return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包中缺少Dockerfile文件");
 //                return SubmissionResp.failure("ZIP包中缺少Dockerfile文件", "MISSING_DOCKERFILE", file.getOriginalFilename());
+            }
+            if (!hasPredictionResultDir) {
+                return ResVo.fail(StatusEnum.SUBMISSION_FAILED_MIXED, "ZIP包根目录缺少prediction_result目录");
             }
 
             return ResVo.ok(SubmissionResp.success(null, file.getOriginalFilename()));

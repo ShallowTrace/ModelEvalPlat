@@ -19,7 +19,9 @@ public class HistoryController {
 
     /**
      * 查询用户所有历史记录
+     * 已弃用
      */
+    @Deprecated
     @GetMapping("/user/{userId}")
     public ResVo<Page<EvaluationResultDO>> getUserHistory(
             @PathVariable Long userId,
@@ -43,7 +45,5 @@ public class HistoryController {
         Page<EvaluationResultDO> result = historyService.getHistoryByCompetition(
                 userId, competitionId, page, size);
         return ResVo.ok(result);
-
-
     }
 }
