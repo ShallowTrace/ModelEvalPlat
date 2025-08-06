@@ -2,15 +2,27 @@ package com.ecode.modelevalplat.service.impl;
 
 import com.ecode.modelevalplat.service.CompetitionService;
 import com.ecode.modelevalplat.service.EvalDockerService;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
+import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class EvalDockerServiceImpl implements EvalDockerService {
@@ -19,67 +31,109 @@ public class EvalDockerServiceImpl implements EvalDockerService {
     @Autowired
     private CompetitionService competitionService;
 
+    private DockerClient dockerClient;
+
+    @PostConstruct
+    public void init() {
+        // 配置Docker客户端连接
+        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+                .dockerHost(config.getDockerHost())
+                .sslConfig(config.getSSLConfig())
+                .maxConnections(100)
+                .connectionTimeout(Duration.ofSeconds(30))
+                .responseTimeout(Duration.ofSeconds(45))
+                .build();
+        dockerClient = DockerClientImpl.getInstance(config, httpClient);
+    }
+
     @Override
     public void executeDocker(String datasetPath, Path targetDir, Long id, Long submissionId) {
-//        String customSubdir = competitionService.selectPath(id);
+        // 1. 构建Docker镜像
+        String imageName = "model-evaluator-" + submissionId;
+
+        File buildContext = targetDir.toFile(); // 使用 targetDir 作为构建上下文
+        File dockerfile = new File(buildContext, "Dockerfile"); // Dockerfile 在构建上下文内
+        System.out.println("这是："+dockerfile.getPath());
+        BuildImageResultCallback buildCallback = new BuildImageResultCallback() {
+            @Override
+            public void onNext(BuildResponseItem item) {
+                String stream = item.getStream();
+                if (stream != null && !stream.trim().isEmpty()) {
+                    logger.info("[BUILD] {}", stream.trim());
+                }
+                super.onNext(item);
+            }
+        };
 
         try {
-            // 1. 构建Docker镜像
-            Process buildProcess = new ProcessBuilder(
-                    "docker", "build", "-t", "model-evaluator-"+submissionId,
-                    "-f", "/mnt/d/CZY/ModelEvalPlat/Dockerfile", "."
-            ).redirectErrorStream(true).start(); // 合并错误流和输出流
-            // 实时捕获构建输出
-            logProcessOutput(buildProcess, "BUILD");
-            int buildExitCode = buildProcess.waitFor();
+            String imageId = dockerClient.buildImageCmd(buildContext)
+                    .withDockerfile(dockerfile)
+                    .withTags(Collections.singleton(imageName))
+                    .exec(buildCallback)
+                    .awaitImageId();
 
-            if (buildExitCode != 0) {
-                logger.error("❌ Docker构建失败! 退出码: {}", buildExitCode);
-                return;
-            }
+            logger.info("✅ Docker构建成功! Image ID: {}", imageId);
 
-            logger.info("✅ Docker构建成功!");
-            // 获取结果目录（保持与Python执行逻辑相同的路径）
+            // 2. 准备容器挂载卷
             Path resultDir = targetDir.resolve("prediction_result");
-            // 2. 运行Docker容器
-            Process runProcess = new ProcessBuilder(
-                    "docker", "run", "--rm",
-                    "-v", "/mnt/d/CZY/ModelEvalPlat:/app/data", // 使用绝对路径
-                    "-v",resultDir+":/app/prediction_result",
+            Bind hostDataBind = new Bind(
+                    "/mnt/d/CZY/ModelEvalPlat",
+//                    targetDir.toString(),
+                    new Volume("/app/data")
+            );
+            Bind resultDirBind = new Bind(
+                    resultDir.toString(),
+                    new Volume("/app/prediction_result")
+            );
 
-                    "-e", "DATA_DIR=/app/data/" + datasetPath,
-                    "model-evaluator-"+submissionId
-            ).redirectErrorStream(true).start();
+            // 3. 创建并启动容器
+            CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
+                    .withEnv("DATA_DIR=/app/data/" + datasetPath)
+                    .withHostConfig(new HostConfig()
+//                            .withBinds( resultDirBind)
+                            .withBinds(hostDataBind, resultDirBind)
+                            .withAutoRemove(true) // 设置容器自动删除
+                    )
+                    .exec();
 
-            // 实时捕获运行输出
-            logProcessOutput(runProcess, "RUN");
-            int runExitCode = runProcess.waitFor();
+            dockerClient.startContainerCmd(container.getId()).exec();
+            logger.info("▶️ 启动容器: {}", container.getId());
 
-            if (runExitCode != 0) {
-                logger.error("❌ Docker运行失败! 退出码: {}", runExitCode);
+            // 4. 捕获容器日志
+            dockerClient.logContainerCmd(container.getId())
+                    .withStdOut(true)
+                    .withStdErr(true)
+                    .withFollowStream(true)
+                    .exec(new ResultCallback.Adapter<Frame>() {
+                        @Override
+                        public void onNext(Frame frame) {
+                            logger.info("[RUN] {}", new String(frame.getPayload()).trim());
+                        }
+                    });
+
+            // 5. 等待容器执行完成
+            WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
+            Integer exitCode = dockerClient.waitContainerCmd(container.getId())
+                    .exec(waitCallback)
+                    .awaitStatusCode();
+
+            if (exitCode != 0) {
+                logger.error("❌ Docker运行失败! 退出码: {}", exitCode);
             } else {
                 logger.info("✅ Docker运行成功!");
             }
 
-        } catch (IOException | InterruptedException e) {
-            logger.error("🚨 Docker调用异常", e);
-            Thread.currentThread().interrupt(); // 恢复中断状态
-        }
-    }
-
-    // 实时打印进程输出
-    private void logProcessOutput(Process process, String prefix) {
-        new Thread(() -> {
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()))) {
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    logger.info("[{}] {}", prefix, line);
-                }
-            } catch (IOException e) {
-                logger.error("输出流读取失败", e);
+        } catch (Exception e) {
+            logger.error("🚨 Docker操作异常", e);
+        } finally {
+            // 清理镜像
+            try {
+                dockerClient.removeImageCmd(imageName).exec();
+                logger.info("🧹 已清理Docker镜像: {}", imageName);
+            } catch (Exception e) {
+                logger.error("⚠️ 清理镜像失败: {}", e.getMessage());
             }
-        }).start();
+        }
     }
 }

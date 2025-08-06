@@ -145,11 +145,11 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 }
 
                 // 删除解压的临时文件
-                try {
-                    FileSystemUtils.deleteRecursively(targetDir);
-                } catch (IOException e) {
-                    log.error("删除临时文件失败: {} {}", e, e.getMessage());
-                }
+//                try {
+//                    FileSystemUtils.deleteRecursively(targetDir);
+//                } catch (IOException e) {
+//                    log.error("删除临时文件失败: {} {}", e, e.getMessage());
+//                }
             }
             log.info("评估结束: {}", submissionId);
         }
@@ -183,6 +183,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             throw new IOException("模型文件解压失败" + e.getMessage(), e);
         }
 
+
         // 清空prediction_result目录
         Path predictionResultDir = targetDir.resolve("prediction_result");
         if (Files.exists(predictionResultDir) && Files.isDirectory(predictionResultDir)) {
@@ -197,6 +198,9 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                 throw new IOException("清理prediction_result目录失败: " + e.getMessage(), e);
             }
 
+        }
+        else{
+            Files.createDirectories(predictionResultDir);
         }
     }
 

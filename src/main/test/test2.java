@@ -1,7 +1,8 @@
+import com.ecode.modelevalplat.service.EvalDockerService;
 import com.ecode.modelevalplat.service.impl.EvalDockerServiceImpl;
+import com.ecode.modelevalplat.service.impl.EvalDockerServiceImpl_备份;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -51,7 +52,7 @@ public class test2 {
     @Test
     public void testExecuteDockerSuccess() throws Exception {
         // 初始化服务实现
-        EvalDockerServiceImpl service = new EvalDockerServiceImpl();
+        EvalDockerService service = new EvalDockerServiceImpl();
 
         // 执行测试方法
         service.executeDocker(
