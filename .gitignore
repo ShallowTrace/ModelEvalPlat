@@ -6,4 +6,4 @@ model.zip
 Dockerfile
 predict.py
 requirements.txt
-src/main/test
+src/main/test/
