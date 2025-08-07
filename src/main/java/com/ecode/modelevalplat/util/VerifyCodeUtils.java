@@ -2,6 +2,7 @@ package com.ecode.modelevalplat.util;
 
 import java.security.SecureRandom;
 
+
 public class VerifyCodeUtils {
 
     private static final SecureRandom random = new SecureRandom();

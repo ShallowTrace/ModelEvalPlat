@@ -75,24 +75,26 @@ spring:
 resilience4j:
   circuitbreaker:
     instances:
-      sendVerifyCode:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 10s
+      preRegister:
         failureRateThreshold: 50
-        eventConsumerBufferSize: 10
-      register:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
         minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 10s
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+      completeRegister:
         failureRateThreshold: 50
-        eventConsumerBufferSize: 10
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+      loginByEmailCode:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+      loginByEmailAndPassword:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
 
 app:
   security:
@@ -110,7 +112,10 @@ management:
   endpoint:
     health:
       show-details: always
-
+jwt:
+  secret: iAjXTjLeU06GEg1BoFANAXJvEOJvv9h7+U/JoXbO6JipjXp2cRgugQvhQXYcWzXWjE0dMYDPsFw3sNfBNBxNlg==
+  expiration: 3600           # 访问 token 过期时间（单位：秒）= 1 天
+  refresh-expiration: 604800  # 刷新 token 过期时间 = 7 天
 
 
 

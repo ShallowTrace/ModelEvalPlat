@@ -50,12 +50,14 @@ public class RedisDistributedLock {
                     String.valueOf(expireTime)
             );
 
+            // 只有当 result 非空，说明加锁成功
             return result != null ? lockValue : null;
         } catch (Exception e) {
             log.error("获取分布式锁失败，lockKey: {}", lockKey, e);
             return null;
         }
     }
+
 
     /**
      * 释放分布式锁
@@ -75,7 +77,7 @@ public class RedisDistributedLock {
                     lockValue
             );
 
-            return result != null && result > 0;
+            return result > 0;
         } catch (Exception e) {
             log.error("释放分布式锁失败，lockKey: {}", lockKey, e);
             return false;

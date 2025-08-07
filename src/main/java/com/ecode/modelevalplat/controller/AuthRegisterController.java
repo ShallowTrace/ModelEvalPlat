@@ -2,7 +2,8 @@ package com.ecode.modelevalplat.controller;
 
 
 import com.ecode.modelevalplat.common.ResVo;
-import com.ecode.modelevalplat.dto.AuthRegisterRequestDTO;
+import com.ecode.modelevalplat.dto.AuthCompleteRegisterDTO;
+import com.ecode.modelevalplat.dto.AuthPreRegisterDTO;
 import com.ecode.modelevalplat.service.AuthRegisterService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 //@RestController
 //@RequestMapping("/api/auth")
@@ -44,25 +46,19 @@ public class AuthRegisterController {
         this.authRegisterService = authRegisterService;
     }
 
-    /** 发送验证码接口 */
-    @PostMapping("/send-code")
-    public ResVo<String> sendCode(HttpServletRequest request, @RequestBody AuthRegisterRequestDTO req) {
-        // 调用服务层发送验证码
-        ResVo<String> result = authRegisterService.sendVerifyCode(
-                request,
-                req.getUsername(),
-                req.getEmail(),
-                req.getPassword(),
-                req.getConfirmPassword());
-        return result;
+    /** 预注册接口 */
+    @PostMapping("/pre-register")
+    public ResVo<String> preRegister(HttpServletRequest httpServletRequest, @RequestBody @Valid AuthPreRegisterDTO authPreRegisterDTO) {
+        // 调用服务层预注册方法
+        return authRegisterService.preRegister(httpServletRequest, authPreRegisterDTO.getEmail());
     }
 
-    /** 注册接口 */
-    @PostMapping("/register")
-    public ResVo<String> register(@RequestBody AuthRegisterRequestDTO dto) {
-        // 调用服务层注册方法
-        ResVo<String> result = authRegisterService.register(dto);
-        return result;
+    @PostMapping("/complete-register")
+    public ResVo<String> completeRegister(@RequestBody @Valid AuthCompleteRegisterDTO authCompleteRegisterDTO) {
+        // 调用服务层完成注册方法
+        return authRegisterService.completeRegister(authCompleteRegisterDTO);
     }
+
+
 }
 

@@ -14,11 +14,12 @@ public interface AuthRegisterMapper extends BaseMapper<UserDO> {
     @Select("SELECT COUNT(1) FROM users WHERE username = #{username}")
     boolean existsByUsername(String username);
 
+
     /**
      * 判断邮箱是否存在
      */
-    @Select("SELECT COUNT(1) FROM users WHERE email = #{email}")
-    boolean existsByEmail(String email);
+    @Select("SELECT * FROM users WHERE email = #{email} LIMIT 1")
+    UserDO existsByEmail(@Param("email") String email);
 
     @Select("SELECT * FROM users WHERE email = #{email} AND is_active = 0")
     UserDO getUnactivatedUserByEmail(String email);

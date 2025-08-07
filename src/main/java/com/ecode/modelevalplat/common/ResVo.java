@@ -41,11 +41,15 @@ public class ResVo<T> implements Serializable {
     /**
      * 成功响应，带格式化消息（带数据）
      */
-    public static <T> ResVo<T> ok(StatusEnum status, T data, Object... args) {
-        String formattedMsg = String.format(status.getMsg(), args);
-        ResVo<T> vo = new ResVo<>(status, data);
-        vo.setMsg(formattedMsg);
-        return vo;
+//    public static <T> ResVo<T> ok(StatusEnum status, T data, Object... args) {
+//        String formattedMsg = String.format(status.getMsg(), args);
+//        ResVo<T> vo = new ResVo<>(status, data);
+//        vo.setMsg(formattedMsg);
+//        return vo;
+//    }
+
+    public static <T> ResVo<T> ok(StatusEnum status, T data) {
+        return new ResVo<>(status, data);
     }
 
     /**
