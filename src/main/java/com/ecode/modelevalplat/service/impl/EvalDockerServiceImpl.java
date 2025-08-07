@@ -78,9 +78,9 @@ public class EvalDockerServiceImpl implements EvalDockerService {
             // 2. 准备容器挂载卷
             Path resultDir = targetDir.resolve("prediction_result");
             Bind hostDataBind = new Bind(
-                    "/mnt/d/CZY/ModelEvalPlat",
-//                    targetDir.toString(),
-                    new Volume("/app/data")
+                    datasetPath,
+                    new Volume("/app/dataset"),
+                    AccessMode.ro  // 关键修改：添加只读模式
             );
             Bind resultDirBind = new Bind(
                     resultDir.toString(),
@@ -89,7 +89,7 @@ public class EvalDockerServiceImpl implements EvalDockerService {
 
             // 3. 创建并启动容器
             CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
-                    .withEnv("DATA_DIR=/app/data/" + datasetPath)
+                    .withEnv("DATA_DIR=/app/dataset/" )
                     .withHostConfig(new HostConfig()
 //                            .withBinds( resultDirBind)
                             .withBinds(hostDataBind, resultDirBind)

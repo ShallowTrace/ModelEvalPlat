@@ -100,7 +100,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
             // 5. 如果运行成功，根据预测结果csv计算得分
             String predictCsvPath = targetDir.resolve("prediction_result").resolve("result.csv").toString();
-            System.out.println("第一个"+predictCsvPath+"第二个"+groundTruthCsvPath);
+            log.debug("第一个"+predictCsvPath+"第二个"+groundTruthCsvPath);
             evaluationResult = processClassificationEvaluationResult(predictCsvPath, groundTruthCsvPath, submissionId);
 
             // 评估执行完毕，无异常，更新提交状态为SUCCESS
@@ -144,12 +144,12 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
                     log.error("删除镜像异常: {}", e.getMessage());
                 }
 
-                // 删除解压的临时文件
-//                try {
-//                    FileSystemUtils.deleteRecursively(targetDir);
-//                } catch (IOException e) {
-//                    log.error("删除临时文件失败: {} {}", e, e.getMessage());
-//                }
+//                 删除解压的临时文件
+                try {
+                    FileSystemUtils.deleteRecursively(targetDir);
+                } catch (IOException e) {
+                    log.error("删除临时文件失败: {} {}", e, e.getMessage());
+                }
             }
             log.info("评估结束: {}", submissionId);
         }
