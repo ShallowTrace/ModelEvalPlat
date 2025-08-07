@@ -1,8 +1,11 @@
 # 模型文件保存路径
-MODELFILE_STORAGE_PATH: C:\Users\ShallowTrace\Desktop\submission
+MODELFILE_STORAGE_PATH: /Users/jingyalin/
 # 最大并发提交次数
 MAX_CONCURRENT_SUBMISSIONS: 3
 
+
+database:
+  name: model_eval_plat
 server:
   port: 8002
   servlet:
@@ -10,10 +13,53 @@ server:
 
 
 spring:
+  jmx:
+    enabled: false
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    timeout: 10000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: email_group
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: jingyaling52000@gmail.com
+    password: wfwkoxhfotwayqxs   # 是“应用专用密码”，不是 Gmail 登录密码
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   datasource:
     username: root
-    password: 123456
+    password: 588113jyl
     url: jdbc:mysql://127.0.0.1:3306/${database.name}?createDatabaseIfNotExist=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-test-query: select 1
@@ -30,11 +76,55 @@ spring:
   liquibase:
     change-log: classpath:liquibase/master.xml
     enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
-    drop-first: false # 为 true 的话每次启动项目会删除所有数据库表
+    drop-first: true # 为 true 的话每次启动项目会删除所有数据库表
 
-# 默认的数据库名
-database:
-  name: model_eval_plat
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      preRegister:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+      completeRegister:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+      loginByEmailCode:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+      loginByEmailAndPassword:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 30s
+
+app:
+  security:
+    sign:
+       secret: sDf9!2kLm#8PqZx7&vRt3$UyWq1XlMn0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+    jmx:
+      exposure:
+        include: non
+  endpoint:
+    health:
+      show-details: always
+jwt:
+  secret: iAjXTjLeU06GEg1BoFANAXJvEOJvv9h7+U/JoXbO6JipjXp2cRgugQvhQXYcWzXWjE0dMYDPsFw3sNfBNBxNlg==
+  expiration: 3600           # 访问 token 过期时间（单位：秒）= 1 天
+  refresh-expiration: 604800  # 刷新 token 过期时间 = 7 天
+
+
 
 mybatis-plus:
   configuration:

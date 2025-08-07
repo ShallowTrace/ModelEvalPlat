@@ -6,7 +6,7 @@ import com.ecode.modelevalplat.dao.mapper.UserMapper;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 import com.ecode.modelevalplat.dao.entity.UserCompetitionDO;
 import com.ecode.modelevalplat.dao.entity.UserDO;
-import com.ecode.modelevalplat.exception.BusinessException;
+import com.ecode.modelevalplat.common.exception.BusinessException;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,16 +1,12 @@
 package com.ecode.modelevalplat.common;
 
-
 import com.ecode.modelevalplat.common.enums.StatusEnum;
-
 import lombok.Data;
 
 import java.io.Serializable;
 
-
 @Data
 public class ResVo<T> implements Serializable {
-    private static final long serialVersionUID = -510306209659393854L;
     // 返回结果说明
     private Status status;
 
@@ -30,8 +26,21 @@ public class ResVo<T> implements Serializable {
         this.result = t;
     }
 
+    public ResVo(Status status, T result) {
+        this.status = status;
+        this.result = result;
+    }
+
+    public static <T> ResVo<T> ok(StatusEnum status, T result) {
+        return new ResVo(Status.newStatus(status), result);
+    }
+
     public static <T> ResVo<T> ok(T t) {
         return new ResVo<>(t);
+    }
+
+    public static <T> ResVo<T> ok(StatusEnum status) {
+        return new ResVo(Status.newStatus(status), null);
     }
 
     private static final String OK_DEFAULT_MESSAGE = "ok";
@@ -44,7 +53,6 @@ public class ResVo<T> implements Serializable {
         return new ResVo<>(Status.newStatus(status, args));
     }
 
-    public static <T> ResVo<T> fail(Status status) {
-        return new ResVo<>(status);
-    }
+
 }
+

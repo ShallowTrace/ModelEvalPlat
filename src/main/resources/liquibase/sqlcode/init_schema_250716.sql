@@ -1,13 +1,16 @@
 -- 参赛用户表（参赛团队表）
 CREATE TABLE `users` (
-     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
-     `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名（唯一）',
-     `password` VARCHAR(255) NOT NULL COMMENT '密码哈希',
-     `role` ENUM('user', 'admin') NOT NULL DEFAULT 'user' COMMENT '用户角色',
-     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
-     `last_login_at` DATETIME DEFAULT NULL COMMENT '最后登录时间',
-     PRIMARY KEY (`id`)
+                         `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+                         `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名（唯一）',
+                         `password` VARCHAR(255) NOT NULL COMMENT '密码哈希',
+                         `email` VARCHAR(255) NOT NULL UNIQUE COMMENT '用户邮箱',
+                         `role` ENUM('user', 'admin') NOT NULL DEFAULT 'user' COMMENT '用户角色',
+                         `is_active` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否激活（0-未激活，1-已激活）',
+                         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+                         `last_login_at` DATETIME DEFAULT NULL COMMENT '最后登录时间',
+                         PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
 
 
 -- 比赛表
