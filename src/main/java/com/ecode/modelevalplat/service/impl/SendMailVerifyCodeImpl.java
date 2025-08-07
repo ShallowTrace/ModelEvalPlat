@@ -2,7 +2,7 @@ package com.ecode.modelevalplat.service.impl;
 
 
 import com.ecode.modelevalplat.common.ResVo;
-import com.ecode.modelevalplat.common.StatusEnum;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.kafka.dto.MailMessageDTO;
 import com.ecode.modelevalplat.kafka.producer.MailProducer;
 import com.ecode.modelevalplat.service.SendMailVerifyCodeService;
@@ -78,6 +78,6 @@ public class SendMailVerifyCodeImpl implements SendMailVerifyCodeService {
 
     public ResVo<String> sendEmailVerifyCodeFallback(String email, Throwable t) {
         log.error("发送邮箱验证码失败，熔断触发，email: {}, 原因: {}", email, t.getMessage());
-        return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY, "邮箱服务繁忙，请稍后再试");
+        return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY);
     }
 }

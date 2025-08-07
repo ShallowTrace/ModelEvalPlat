@@ -1,7 +1,7 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.ecode.modelevalplat.common.ResVo;
-import com.ecode.modelevalplat.common.StatusEnum;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dao.entity.UserDO;
 import com.ecode.modelevalplat.dao.mapper.AuthRegisterMapper;
 import com.ecode.modelevalplat.dto.AuthCompleteRegisterDTO;
@@ -57,11 +57,11 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
     public ResVo<String> preRegister(HttpServletRequest httpServletRequest, String email) {
         try{
             if (!EmailUtils.isValid(email)) {
-                return ResVo.fail(StatusEnum.INVALID_EMAIL_FORMAT, email);
+                return ResVo.fail(StatusEnum.INVALID_EMAIL_FORMAT);
             }
 
             if (authRegisterMapper.existsByEmail(email) == null) {
-                return ResVo.fail(StatusEnum.EMAIL_ALREADY_EXISTS, email);
+                return ResVo.fail(StatusEnum.EMAIL_ALREADY_EXISTS);
             }
 
             //IP限流
@@ -90,7 +90,7 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
                 return ResVo.ok(StatusEnum.REGISTER_SUCCESS);
             }
             catch (DuplicateKeyException e) {
-                return ResVo.fail(StatusEnum.USER_ALREADY_EXISTS, email);
+                return ResVo.fail(StatusEnum.USER_ALREADY_EXISTS);
             }
         }
         catch (Exception e) {
@@ -121,13 +121,13 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
         try {
             // 1. 参数校验
             if (!EmailUtils.isValid(email)) {
-                return ResVo.fail(StatusEnum.INVALID_EMAIL_FORMAT, email);
+                return ResVo.fail(StatusEnum.INVALID_EMAIL_FORMAT);
             }
             if (!UsernameUtils.isValid(username)) {
-                return ResVo.fail(StatusEnum.USERNAME_WEAK, username);
+                return ResVo.fail(StatusEnum.USERNAME_WEAK);
             }
             if (!PasswordUtils.isStrong(password)) {
-                return ResVo.fail(StatusEnum.PASSWORD_WEAK, password);
+                return ResVo.fail(StatusEnum.PASSWORD_WEAK);
             }
             if (!password.equals(confirmPassword)) {
                 return ResVo.fail(StatusEnum.PASSWORD_TWICE);

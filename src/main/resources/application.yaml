@@ -1,10 +1,16 @@
 # 模型文件保存路径
 MODELFILE_STORAGE_PATH: /Users/jingyalin/
+# 最大并发提交次数
+MAX_CONCURRENT_SUBMISSIONS: 3
+
 
 database:
   name: model_eval_plat
 server:
-  port: 8111
+  port: 8002
+  servlet:
+    context-path: /api
+
 
 spring:
   jmx:
@@ -61,7 +67,8 @@ spring:
       idle-timeout: 300000
       maximum-pool-size: 5
       minimum-idle: 5
-    servlet:
+
+  servlet:
       multipart:
         max-file-size: 500MB
         max-request-size: 500MB
@@ -118,4 +125,15 @@ jwt:
   refresh-expiration: 604800  # 刷新 token 过期时间 = 7 天
 
 
+
+mybatis-plus:
+  configuration:
+    #开启下划线转驼峰
+    map-underscore-to-camel-case: true
+
+pagehelper:
+  helper-dialect: mysql  # 指定数据库方言
+  reasonable: true      # 合理分页（页码小于1时返回第一页，大于最大页时返回最后一页）
+  support-methods-arguments: true # 启用方法参数分页
+  close-conn: true # 自动关闭连接
 

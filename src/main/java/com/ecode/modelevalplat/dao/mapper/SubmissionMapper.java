@@ -1,9 +1,9 @@
 package com.ecode.modelevalplat.dao.mapper;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import org.apache.ibatis.annotations.*;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -19,6 +19,14 @@ public interface SubmissionMapper {
     @Update("UPDATE submissions SET status=#{status} WHERE id=#{id}")
     void updateStatus(SubmissionDO submission);
 
+    @Update("UPDATE submissions SET status=#{status} WHERE id=#{id}")
+    void updateStatusById(@Param("id") Long id, @Param("status") String status);
+
+    @Select("SELECT competition_id FROM submissions WHERE id= #{id}")
+    Long getCompetitionId(Long id);
+
+    @Select("SELECT model_path FROM submissions WHERE id= #{id}")
+    String getModelPath(Long id);
 
     @Delete("DELETE FROM submissions WHERE id=#{id}")
     void delete(Long id);
@@ -33,14 +41,18 @@ public interface SubmissionMapper {
     @Select("SELECT * FROM submissions WHERE competition_id=#{competitionId}")
     List<SubmissionDO> findByCompetitionId(Long competitionId);
 
-    @Select("SELECT * FROM submissions WHERE user_id = #{userId} AND competition_id = #{competitionId}")
-    Page<SubmissionDO> findByUserAndCompetition(
+    @Select("SELECT * FROM submissions WHERE user_id = #{userId} AND competition_id = #{competitionId} ORDER BY submit_time DESC")
+    List<SubmissionDO> findByUserAndCompetition(
             @Param("userId") Long userId,
-            @Param("competitionId") Long competitionId,
-            Pageable pageable
+            @Param("competitionId") Long competitionId
     );
 
     @Select("SELECT COUNT(*) FROM submissions WHERE user_id=#{userId} AND competition_id=#{competitionId} " +
             "AND DATE(submit_time) = CURRENT_DATE")
     int countTodaySubmissions(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
+
+    @Select("SELECT COUNT(*) FROM submissions WHERE user_id=#{userId} AND competition_id=#{competitionId} " +
+            "AND (status='PENDING' OR status='PROCESSING')")
+    int countConcurrentSubmissions(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
+
 }

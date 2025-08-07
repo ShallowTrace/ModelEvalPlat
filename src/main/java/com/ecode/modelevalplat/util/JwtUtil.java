@@ -9,7 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import com.ecode.modelevalplat.common.StatusEnum;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;

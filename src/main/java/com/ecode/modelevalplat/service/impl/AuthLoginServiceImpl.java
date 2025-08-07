@@ -1,7 +1,7 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.ecode.modelevalplat.common.ResVo;
-import com.ecode.modelevalplat.common.StatusEnum;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.config.JwtProperties;
 import com.ecode.modelevalplat.dao.entity.UserDO;
 import com.ecode.modelevalplat.dao.mapper.AuthLoginMapper;
@@ -181,7 +181,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                                                                  HttpServletRequest httpRequest,
                                                                  Throwable t) {
         log.error("loginByEmailAndPassword 接口触发熔断或异常：{}", t.getMessage());
-        return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY, "登录服务暂时不可用，请稍后再试");
+        return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY);
     }
 
 
@@ -271,7 +271,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                                                           HttpServletRequest httpRequest,
                                                           Throwable t) {
         log.error("loginByEmailCode 接口触发熔断或异常：{}", t.getMessage());
-        return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY, "登录服务暂时不可用，请稍后再试");
+        return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY);
     }
 
     @Override
