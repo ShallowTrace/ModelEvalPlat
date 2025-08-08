@@ -35,11 +35,11 @@ public class SubmissionController {
 
 //        MultipartFile targetFile = submitType.equals("MODEL") ? modelFile : dockerFile;
         // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
-        ResVo<SubmissionResp> resp;
+        ResVo<SubmissionResp> resp = new ResVo<>();
         if (submitType.equals("MODEL")) {
             resp = submissionService.submitModel(1L, competitionId, submitType, modelFile);
         }
-        else {
+        else if (submitType.equals("DOCKER")){
             resp = submissionService.submitModel(1L, competitionId, submitType, dockerFile);
         }
 
