@@ -31,6 +31,7 @@ public class CompetitionRegistrationServiceImpl implements CompetitionRegistrati
     @Transactional(rollbackFor = Exception.class)
     @Override
     public int registerCompetition(Long userId, Long competitionId) {
+
         // 1. 验证用户存在性
         UserDO user = userMapper.findById(userId);
         if (user == null) {
