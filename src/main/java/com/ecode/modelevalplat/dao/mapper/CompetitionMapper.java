@@ -2,7 +2,7 @@ package com.ecode.modelevalplat.dao.mapper;
 
 
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-//import com.example.demo.entity.Competition;
+
 import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;

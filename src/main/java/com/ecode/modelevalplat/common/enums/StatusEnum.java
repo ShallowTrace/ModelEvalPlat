@@ -89,8 +89,16 @@ public enum StatusEnum {
     // 图片相关异常类型
     UPLOAD_PIC_FAILED(600_500_002, "图片上传失败！"),
     // 文件存储异常，IOException
-    SAVE_FILE_FAILED(600_500_003, "文件存储失败:%s");
+    SAVE_FILE_FAILED(600_500_003, "文件存储失败:%s"),
 
+    // 比赛报名模块 (700前缀)
+    COMPETITION_REGISTRATION_SUCCESS(700_500_001, "比赛报名成功"),
+    COMPETITION_NOT_FOUND(700_500_002, "比赛不存在"),
+    COMPETITION_INACTIVE(700_500_003, "比赛未激活"),
+    COMPETITION_NOT_STARTED(700_500_004, "比赛尚未开始"),
+    COMPETITION_ENDED(700_500_005, "比赛已结束"),
+    ALREADY_REGISTERED(700_500_006, "用户已报名该比赛"),
+    REGISTRATION_SYSTEM_ERROR(700_500_007, "报名系统异常");
 
     private final int code;
 

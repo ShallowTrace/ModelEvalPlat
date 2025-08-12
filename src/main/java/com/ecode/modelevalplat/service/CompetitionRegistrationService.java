@@ -1,10 +1,11 @@
 package com.ecode.modelevalplat.service;
 
 
+import com.ecode.modelevalplat.common.ResVo;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface CompetitionRegistrationService {
 
-    @Transactional(rollbackFor = Exception.class)
-    int registerCompetition(Long userId, Long competitionId);
+
+    ResVo<Integer> registerCompetition(Long userId, Long competitionId);
 }

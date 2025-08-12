@@ -3,6 +3,8 @@ package com.ecode.modelevalplat.service.impl;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
 import com.ecode.modelevalplat.service.CompetitionService;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +19,11 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     //管理员/用户 查询比赛列表
     @Override
-    public List<CompetitionDO> selectAllCompetition() {
-        return competitionMapper.selectAllCompetition();
+    public PageInfo<CompetitionDO> selectAllCompetition(int pageNum,int pageSize) {
+        // 使用PageHelper启动分页，并指定排序
+        PageHelper.startPage(pageNum, pageSize);
+        List<CompetitionDO> list = competitionMapper.selectAllCompetition();
+        return new PageInfo<>(list);
     }
 
     //管理员/用户 查询比赛数据集路径
