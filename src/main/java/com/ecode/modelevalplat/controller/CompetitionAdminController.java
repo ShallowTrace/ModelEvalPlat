@@ -97,9 +97,10 @@ public class CompetitionAdminController {
     }
 
     @PostMapping("/registrations/{userId}/{competitionId}")
+    @ResponseBody
 //     curl -X POST "http://127.0.0.1:8002/api/registrations/1/1"
     public ResVo<Integer> registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
     {
-        return ResVo.ok(competitionRegistrationService.registerCompetition(userId,competitionId));
+        return competitionRegistrationService.registerCompetition(userId,competitionId);
     }
 }
