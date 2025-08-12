@@ -22,14 +22,18 @@ public interface CompetitionMapper {
             @Result(property = "isActive", column = "is_active"),
             @Result(property = "participantCount", column = "participant_count"),
             @Result(property = "dailySubmissionLimit", column = "daily_submission_limit"),
-            @Result(property = "createdAt", column = "created_at")
+            @Result(property = "createdAt", column = "created_at"),
+            @Result(property = "registerStartTime", column = "register_start_time"),
+            @Result(property = "registerEndTime", column = "register_end_time")
     })
     List<CompetitionDO> selectAllCompetition();
 
     @Insert("INSERT INTO competitions (name, description, start_time, end_time, path, " +
-            "is_active, participant_count, daily_submission_limit, created_at) " +
+            "is_active, participant_count, daily_submission_limit, created_at, " +
+            "register_start_time, register_end_time) " +
             "VALUES (#{name}, #{description}, #{startTime}, #{endTime}, #{path}, " +
-            "#{isActive}, #{participantCount}, #{dailySubmissionLimit}, #{createdAt})")
+            "#{isActive}, #{participantCount}, #{dailySubmissionLimit}, #{createdAt}, " +
+            "#{registerStartTime}, #{registerEndTime})")
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
     int insertCompetition(CompetitionDO competition);
 
@@ -56,9 +60,8 @@ public interface CompetitionMapper {
     String selectPath(Long competitionId);
 
 //         6. 更新比赛人数
-    @Update("UPDATE competition " +
+    @Update("UPDATE competitions " +
             "SET participant_count = participant_count + 1 " +
-            "WHERE competition_id = #{competitionId} " +
-            "RETURNING participant_count")
+            "WHERE id = #{competitionId} ")
     int incrementParticipantCount(@Param("competitionId") Long competitionId);
 }

@@ -12,7 +12,11 @@
     </changeSet>
 
     <changeSet id="00000000000002" author="CZY">
-        <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/sqlcode/init_competitions.sql"/>
+        <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/sqlcode/init_competition.sql"/>
+    </changeSet>
+
+    <changeSet id="00000000000003" author="CZY">
+        <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/sqlcode/init_user.sql"/>
     </changeSet>
 
 <!--    <changeSet id="00000000000001" author="YiHui">-->

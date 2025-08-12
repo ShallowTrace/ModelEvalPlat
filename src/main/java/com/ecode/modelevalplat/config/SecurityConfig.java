@@ -26,8 +26,9 @@ public class SecurityConfig {
                 .cors().and()
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        .antMatchers("/api/auth/**").permitAll() // 放开注册登录接口
-                        .anyRequest().authenticated()
+//                        .antMatchers("/api/auth/**").permitAll() // 放开注册登录接口
+//                        .anyRequest().authenticated()
+                            .anyRequest().permitAll()  // 修改这里：允许所有请求
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

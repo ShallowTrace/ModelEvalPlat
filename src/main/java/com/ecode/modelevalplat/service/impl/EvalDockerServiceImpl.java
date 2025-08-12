@@ -11,6 +11,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-
+@Slf4j
 @Service
 public class EvalDockerServiceImpl implements EvalDockerService {
     private static final Logger logger = LoggerFactory.getLogger(EvalDockerServiceImpl.class);
@@ -54,7 +55,7 @@ public class EvalDockerServiceImpl implements EvalDockerService {
 
         File buildContext = targetDir.toFile(); // 使用 targetDir 作为构建上下文
         File dockerfile = new File(buildContext, "Dockerfile"); // Dockerfile 在构建上下文内
-        System.out.println("这是："+dockerfile.getPath());
+        log.info("这是："+dockerfile.getPath());
         BuildImageResultCallback buildCallback = new BuildImageResultCallback() {
             @Override
             public void onNext(BuildResponseItem item) {

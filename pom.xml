@@ -243,7 +243,11 @@
             <version>2.3.1</version>
         </dependency>
 
-
+        <!-- Liquibase -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
 
 
 
