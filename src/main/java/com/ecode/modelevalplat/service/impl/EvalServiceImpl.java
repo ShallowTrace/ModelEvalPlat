@@ -71,14 +71,14 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
             if (modelPath == null || modelPath.isEmpty()) {
                 throw new RuntimeException("模型路径不存在 for submission: " + submissionId);
             }
-            System.out.println("测试git合并");
+            log.info("测试git合并");
             // 2. 解压ZIP文件
             Path originalZipPath = Paths.get(modelPath);
             // 生成解压目录路径targetDir（与ZIP文件同名不带扩展名）
             String targetDirName = originalZipPath.getFileName().toString().replace(".zip", "");
             targetDir = originalZipPath.getParent().resolve(targetDirName);
-            System.out.println("modelPath:"+modelPath);
-            System.out.println("targetDir:"+targetDir);
+            log.info("modelPath:"+modelPath);
+            log.info("targetDir:"+targetDir);
             unzipModelFile(modelPath, targetDir);
 
             // 3. 获取测试集路径和真实值csv路径

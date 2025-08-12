@@ -13,7 +13,7 @@ CREATE TABLE `users` (
 
 
 
--- 比赛表
+-- auto-generated definition
 create table competitions
 (
     id                     bigint unsigned auto_increment comment '比赛ID'
@@ -22,15 +22,19 @@ create table competitions
     description            text                                   null comment '比赛介绍',
     start_time             datetime                               not null comment '开始时间',
     end_time               datetime                               not null comment '结束时间',
-    path                   varchar(255)                           null comment '测试集和真实值csv路径', -- 测试集路径在数据库保存的测试集路径下的data目录下，真实值csv在数据库保存的测试集路径下的Ground_Truth.csv
+    path                   varchar(255)                           null comment '测试集和真实值csv路径',
     is_active              tinyint(1)   default 1                 not null comment '是否激活',
     participant_count      int unsigned default '0'               not null comment '报名人数',
     daily_submission_limit int          default 5                 not null comment '每日提交次数限制',
     created_at             datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    register_end_time      datetime                               not null comment '允许报名的开始时间',
+    register_start_time    datetime                               not null comment '允许报名的最晚时间',
     constraint unique_competition_name
         unique (name)
 )
     comment '比赛信息表';
+
+
 
 
 -- 报名表

@@ -16,6 +16,7 @@
 
 package com.ecode.modelevalplat.controller;
 
+import com.ecode.modelevalplat.common.ResVo;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 //import com.example.demo.entity.Competition;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
@@ -38,8 +39,8 @@ public class CompetitionAdminController {
     //    curl -X GET "http://127.0.0.1:8002/api/competitions"
     @GetMapping("/competitions")
     @ResponseBody
-    public List<CompetitionDO> selectAllCompetition(){
-        return competitionService.selectAllCompetition();
+    public ResVo<List<CompetitionDO>> selectAllCompetition(){
+        return ResVo.ok(competitionService.selectAllCompetition());
     }
 
 //     POST http://127.0.0.1:8002/api/competitions
@@ -52,12 +53,14 @@ public class CompetitionAdminController {
 //                "is_active": true,
 //                "participant_count": 1,
 //                "daily_submission_limit": 6,
-//                "created_at": "2025-08-01T09:00:00"
+//                "created_at": "2025-08-01T09:00:00",
+//                "register_start_time":"2025-08-01T09:00:00",
+//                "register_end_time":"2025-08-01T09:00:00"
 //    }'
     @PostMapping("/competitions")
     @ResponseBody
-    public int publishCompetition(@RequestBody CompetitionDO competition){
-        return competitionService.publishCompetition(competition);
+    public ResVo<Integer> publishCompetition(@RequestBody CompetitionDO competition){
+        return ResVo.ok(competitionService.publishCompetition(competition));
     }
 
 //     DELETE http://127.0.0.1:8082/api/competitions/{competitionId}
@@ -65,39 +68,38 @@ public class CompetitionAdminController {
 //                -H "Content-Type: application/json"
     @DeleteMapping("/competitions/{competitionId}")
     @ResponseBody
-    public int deleteCompetition(@PathVariable Long competitionId){
-        return competitionService.deleteCompetition(competitionId);
+    public ResVo<Integer> deleteCompetition(@PathVariable Long competitionId){
+        return ResVo.ok(competitionService.deleteCompetition(competitionId));
     }
 
     // PUT http://127.0.0.1:8082/api/competitions/{competitionId}/content
 //     curl -X PUT "http://127.0.0.1:8002/api/competitions/1/content" -H "Content-Type: application/json" -d "重庆大学"
     @PutMapping("/competitions/{competitionId}/content")
     @ResponseBody
-    public int updateCompetitionDescription(@PathVariable Long competitionId,  @RequestBody String content){
-        return competitionService.updateCompetitionDescription(competitionId,content);
+    public ResVo<Integer> updateCompetitionDescription(@PathVariable Long competitionId,  @RequestBody String content){
+        return ResVo.ok(competitionService.updateCompetitionDescription(competitionId,content));
     }
 
 //     PUT http://127.0.0.1:8082/api/competitions/{competitionId}/startTime
 //     curl -X PUT "http://127.0.0.1:8002/api/competitions/1/startTime" -H "Content-Type: application/json" -d '"2023-10-01T15:30:09"'
     @PutMapping("/competitions/{competitionId}/startTime")
     @ResponseBody
-    public int updateCompetitionStartTime(@PathVariable Long competitionId,  @RequestBody LocalDateTime startTime){
-        return competitionService.updateCompetitionStartTime(competitionId,startTime);
+    public ResVo<Integer> updateCompetitionStartTime(@PathVariable Long competitionId,  @RequestBody LocalDateTime startTime){
+        return ResVo.ok(competitionService.updateCompetitionStartTime(competitionId,startTime));
     }
 
     // PUT http://127.0.0.1:8002/api/competitions/{competitionId}/endTime
 //     curl -X PUT "http://127.0.0.1:8002/api/competitions/1/endTime" -H "Content-Type: application/json" -d '"2023-10-01T15:30:09"'
     @PutMapping("/competitions/{competitionId}/endTime")
     @ResponseBody
-    public int updateCompetitionEndTime(@PathVariable Long competitionId,  @RequestBody LocalDateTime endTime){
-        return competitionService.updateCompetitionEndTime(competitionId,endTime);
+    public ResVo<Integer> updateCompetitionEndTime(@PathVariable Long competitionId,  @RequestBody LocalDateTime endTime){
+        return ResVo.ok(competitionService.updateCompetitionEndTime(competitionId,endTime));
     }
 
     @PostMapping("/registrations/{userId}/{competitionId}")
-    public int registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
+//     curl -X POST "http://127.0.0.1:8002/api/registrations/1/1"
+    public ResVo<Integer> registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
     {
-        return competitionRegistrationService.registerCompetition(userId,competitionId);
+        return ResVo.ok(competitionRegistrationService.registerCompetition(userId,competitionId));
     }
-
-
 }
