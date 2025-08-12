@@ -3,3 +3,4 @@
 .vscode/
 src/main/java/com/ecode/modelevalplat/controller/EvaluationController.java
 model.zip
+.DS_Store

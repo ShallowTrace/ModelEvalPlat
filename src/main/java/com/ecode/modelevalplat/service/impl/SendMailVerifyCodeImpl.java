@@ -61,13 +61,19 @@ public class SendMailVerifyCodeImpl implements SendMailVerifyCodeService {
             redisTemplate.expire(dailyCountKey, 1, TimeUnit.DAYS);
 
             // 发送邮件
-            MailMessageDTO mailMessage = new MailMessageDTO();
-            mailMessage.setTo(email);
-            mailMessage.setSubject("中国工商银行AI模型测评平台登录验证码");
-            mailMessage.setContent("您的登录验证码是：" + verifyCode + "，有效期15分钟。");
-            mailProducer.sendMail(mailMessage);
+            try {
+                MailMessageDTO mailMessage = new MailMessageDTO();
+                mailMessage.setTo(email);
+                mailMessage.setSubject("中国工商银行AI模型测评平台登录验证码");
+                mailMessage.setContent("您的登录验证码是：" + verifyCode + "，有效期15分钟。");
+                mailProducer.sendMail(mailMessage);
+                return ResVo.ok(StatusEnum.EMAIL_CODE_SENT_SUCCESS);
+            } catch (Exception e) {
+                // 可选：记录异常日志
+                // log.error("发送邮箱验证码失败", e);
+                return ResVo.fail(StatusEnum.SYSTEM_BUSY);
+            }
 
-            return ResVo.ok(StatusEnum.EMAIL_CODE_SENT_SUCCESS);
         } finally {
             // 释放锁（防止异常导致锁一直持有）
             if (!redisDistributedLock.releaseLock(lockKey, lockValue)) {

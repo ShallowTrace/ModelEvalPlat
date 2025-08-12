@@ -1,23 +1,23 @@
 package com.ecode.modelevalplat.context;
 
 public class UserContext {
-    private Long userId;
+    private String userId;
     private String username;
     private String role;
 
     public UserContext() {}
 
-    public UserContext(Long userId, String username, String role) {
+    public UserContext(String userId, String username, String role) {
         this.userId = userId;
         this.username = username;
         this.role = role;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

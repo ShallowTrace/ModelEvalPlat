@@ -17,7 +17,7 @@ public class UserContextHolder {
     }
 
     // 可选：封装获取 ID、用户名、角色的方法
-    public static Long getUserId() {
+    public static String getUserId() {
         UserContext context = get();
         return context != null ? context.getUserId() : null;
     }

@@ -12,6 +12,7 @@ import com.ecode.modelevalplat.dto.JwtResponseDTO;
 import com.ecode.modelevalplat.service.AuthLoginService;
 import com.ecode.modelevalplat.util.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -84,7 +85,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                 return ResVo.fail(StatusEnum.USER_NOT_FOUND);
             }
 
-            Long userId = user.getId();
+            String userId = String.valueOf(user.getId());
 
             // ---------------------------
             // 4. 检查账户是否被锁定
@@ -154,7 +155,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                 jwtResponse1.setUsername(user.getUsername());
 
                 // 更新最后登录时间
-                authLoginMapper.updateLastLoginTime(userId);
+                authLoginMapper.updateLastLoginTime(Long.valueOf(userId));
 
                 // 单点登录缓存
                 String ssoKey = "sso:token:" + user.getUsername();
@@ -164,7 +165,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                 redisTemplate.opsForSet().add(ipLoginKey, String.valueOf(userId));
                 redisTemplate.expire(ipLoginKey, jwtProperties.getExpiration(), TimeUnit.SECONDS);
 
-                return ResVo.ok(StatusEnum.REGISTER_SUCCESS, jwtResponse1);
+                return ResVo.ok(StatusEnum.LOGIN_SUCCESS, jwtResponse1);
             } finally {
                 if (!redisDistributedLock.releaseLock(loginLockKey, lockValue)) {
                     log.warn("释放登陆1分布式锁失败，lockKey: {}", loginLockKey);
@@ -220,7 +221,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
             if (user == null) {
                 return ResVo.fail(StatusEnum.USER_NOT_FOUND);
             }
-            Long userId = user.getId();
+            String userId = String.valueOf(user.getId());
 
             String ipAddress2 = IpUtils.getClientIp(httpRequest);
             String ipLoginKey = "ip:login:" + ipAddress2;
@@ -243,7 +244,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                 jwtResponse2.setUsername(user.getUsername());
 
                 // 更新最后登录时间
-                authLoginMapper.updateLastLoginTime(userId);
+                authLoginMapper.updateLastLoginTime(Long.valueOf(userId));
 
                 // 单点登录缓存
                 String ssoKey = "sso:token:" + user.getUsername();
@@ -253,7 +254,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
                 redisTemplate.opsForSet().add(ipLoginKey, String.valueOf(userId));
                 redisTemplate.expire(ipLoginKey, jwtProperties.getExpiration(), TimeUnit.SECONDS);
 
-                return ResVo.ok(StatusEnum.REGISTER_SUCCESS, jwtResponse2);
+                return ResVo.ok(StatusEnum.LOGIN_SUCCESS, jwtResponse2);
             } finally {
                 if (!redisDistributedLock.releaseLock(loginLockKey, lockValue)) {
                     log.warn("释放登陆2分布式锁失败，lockKey: {}", loginLockKey);
@@ -277,19 +278,38 @@ public class AuthLoginServiceImpl implements AuthLoginService {
     @Override
     public ResVo<CaptchaResponseDTO> generateCaptcha(String uuid) {
         String code = CaptchaUtil.generateCode();
-
         // 生成验证码图片Base64
         String imageBase64 = CaptchaUtil.generateImageBase64(code);
-
         // 保存验证码到Redis，key: captcha:uuid, value: code
         String redisKey = "captcha:" + uuid;
+        System.out.println(code);
+        System.out.println(uuid);
         redisTemplate.opsForValue().set(redisKey, code, CAPTCHA_EXPIRE_SECONDS, TimeUnit.SECONDS);
-
         CaptchaResponseDTO responseDTO = new CaptchaResponseDTO();
         responseDTO.setUuid(uuid);
         responseDTO.setImageBase64(imageBase64);
-
         return ResVo.ok(StatusEnum.DYNAMIC_CODE_GENERATE, responseDTO);
+    }
+    @Override
+    public ResVo<Void> logout(String token) {
+        try {
+            Claims claims = jwtUtil.parseToken(token);
+            String username = claims.getSubject();
+            if (username == null) {
+                return ResVo.fail(StatusEnum.TOKEN_PARSE_FAILED);
+            }
+            String ssoKey = "sso:token:" + username;
+
+            // 删除Redis中的token，达到退出效果
+            Boolean deleted = redisTemplate.delete(ssoKey);
+            if (deleted) {
+                return ResVo.ok(StatusEnum.LOGOUT_SUCCESS);
+            } else {
+                return ResVo.fail(StatusEnum.LOGOUT_FAILED);
+            }
+        } catch (Exception e) {
+            return ResVo.fail(StatusEnum.LOGOUT_EXCEPTION);
+        }
     }
 
 

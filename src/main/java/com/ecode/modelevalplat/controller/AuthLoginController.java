@@ -1,6 +1,7 @@
 package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.common.ResVo;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dto.*;
 import com.ecode.modelevalplat.service.AuthLoginService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthLoginController {
     private final AuthLoginService authLoginService;
 
@@ -33,5 +34,17 @@ public class AuthLoginController {
     @PostMapping("/login-email-code")
     public ResVo<JwtResponseDTO> loginByEmailCode(@RequestBody @Valid AuthLoginRequestDTO2 authLoginRequestDTO2, HttpServletRequest httpRequest){
         return authLoginService.loginByEmailCode(authLoginRequestDTO2, httpRequest);
+    }
+
+    @PostMapping("/logout")
+    public ResVo<Void> logout(HttpServletRequest request) {
+        // 从请求头获取 token
+        String token = request.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResVo.fail(StatusEnum.USER_NOT_LOGGED_IN);
+        }
+        token = token.substring(7);
+
+        return authLoginService.logout(token);
     }
 }

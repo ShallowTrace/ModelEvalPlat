@@ -29,6 +29,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+        // 放行无需认证的路径，比如注册、登录等
+        if (path.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            System.out.print("path: " + path);
+            return;
+        }
+
         String token = request.getHeader("Authorization");
 
         if (token == null || !token.startsWith("Bearer ")) {
@@ -39,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         token = token.substring(7); // 去掉 "Bearer "
         try {
             Claims claims = jwtUtil.parseToken(token);
-            Long userId = claims.get("userId", Long.class);
+            String userId = claims.get("userId", String.class);
             String username = claims.getSubject(); // 对应 setSubject(username)
             String role = claims.get("role", String.class);
 
@@ -74,6 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserContextHolder.clear();
         }
     }
+
 }
 
 

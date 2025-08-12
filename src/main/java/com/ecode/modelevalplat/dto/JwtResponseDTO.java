@@ -15,7 +15,7 @@ public class JwtResponseDTO {
     private String refreshToken;
 
     @ApiModelProperty(value = "用户ID", example = "10001")
-    private Long userId;
+    private String userId;
 
     @ApiModelProperty(value = "用户名", example = "john_doe")
     private String username;

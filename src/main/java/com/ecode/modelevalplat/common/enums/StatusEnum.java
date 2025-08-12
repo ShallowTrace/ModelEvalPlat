@@ -29,13 +29,13 @@ public enum StatusEnum {
     REGISTER_SUCCESS(100_201_001, "注册成功"),
     VERIFY_CODE_SENT(100_200_002, "验证码发送成功"),
     VERIFY_CODE_VALID(100_200_003, "验证码校验通过"),
-    USER_ALREADY_EXISTS(100_409_004, "用户名已存在: %s"),
-    EMAIL_ALREADY_EXISTS(100_409_005, "邮箱已存在: %s"),
-    INVALID_EMAIL_FORMAT(100_400_006, "邮箱格式不正确: %s"),
+    USER_ALREADY_EXISTS(100_409_004, "用户名已存在"),
+    EMAIL_ALREADY_EXISTS(100_409_005, "邮箱已存在"),
+    INVALID_EMAIL_FORMAT(100_400_006, "邮箱格式不正确"),
     PASSWORD_WEAK(100_422_007, "密码不符合要求"),
     USERNAME_WEAK(100_400_008, "用户名不符合要求"),
     PASSWORD_TWICE(100_400_009, "两次输入密码不一致"),
-    VERIFY_CODE_EXPIRED(100_400_010, "验证码已过期"),
+    VERIFY_CODE_EXPIRED(100_400_010, "验证码无效，请重新发送验证码"),
     VERIFY_CODE_INCORRECT(100_400_011, "验证码错误"),
     VERIFY_CODE_NOT_SENT(100_400_012, "请先请求验证码"),
     VERIFY_CODE_TOO_FREQUENT(100_429_013, "验证码请求频繁，请间隔2分钟发送一次"),
@@ -64,6 +64,37 @@ public enum StatusEnum {
     PLEASE_REQUEST_CODE_FIRST(200_401_014, "请先请求发送邮箱验证码"),
     EMAIL_CODE_SEND_TOO_FREQUENT(200_401_015, "邮箱验证码发送频繁，请2分钟后再试"),
     TOO_MANY_USERS_LOGGED_IN_FROM_IP(200_401_016, "当前IP登录用户数量已达上限，请稍后再试"),
+    LOGIN_SUCCESS(200_201_017, "登陆成功"),
+
+    // 登出模块
+    LOGOUT_SUCCESS(400_201_001, "登出成功"),
+    LOGOUT_FAILED(400_500_002, "登陆失效"),
+    USER_NOT_LOGGED_IN(400_401_003, "用户未登录"),
+    //token 解析失败
+    TOKEN_PARSE_FAILED(400_401_004, "token解析失败"),
+    //退出登陆异常
+    LOGOUT_EXCEPTION(400_500_005, "退出登录异常"),
+
+    // 获取用户信息模块
+    USER_INFO_NOT_FOUND(700_401_001, "用户信息未找到"),
+    //查询用户信息成功
+    USER_INFO_SUCCESS(700_201_002, "查询用户信息成功"),
+    //用户名不能为空
+    USERNAME_EMPTY(700_400_003, "用户名不能为空"),
+    //用户名已存在
+    USERNAME_EXISTS(700_409_004, "用户名已存在"),
+    //密码不能为空
+    PASSWORD_EMPTY(700_400_005, "密码不能为空"),
+    //原密码错误
+    OLD_PASSWORD_ERROR(700_401_006, "原密码错误"),
+    //修改的字段无效
+    INVALID_FIELD(700_422_007, "修改的字段无效"),
+    //更新用户信息失败
+    UPDATE_USER_INFO_FAILED(700_500_008, "更新用户信息失败"),
+    //更新用户信息成功
+    UPDATE_USER_INFO_SUCCESS(700_201_009, "更新用户信息成功"),
+
+
 
 
     // 提交相关异常类型，前缀为300

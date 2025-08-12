@@ -32,7 +32,7 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(Long userId, String username, String role) {
+    public String generateToken(String userId, String username, String role) {
         return Jwts.builder()
                 .setSubject(username) // 设为用户名，方便用 username 做 Redis key
                 .claim("userId", userId)
@@ -44,7 +44,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String username, String role) {
+    public String generateRefreshToken(String userId, String username, String role) {
         return Jwts.builder()
                 .setSubject("refresh")
                 .claim("userId", userId)
