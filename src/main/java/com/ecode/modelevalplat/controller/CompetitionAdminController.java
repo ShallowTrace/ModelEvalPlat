@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -106,4 +107,24 @@ public class CompetitionAdminController {
     {
         return competitionRegistrationService.registerCompetition(userId,competitionId);
     }
+
+    @DeleteMapping("/registrations/{userId}/{competitionId}")
+    @ResponseBody
+// curl -X DELETE "http://127.0.0.1:8002/api/registrations/1/1"
+    public ResVo<Integer> cancelRegistration(
+            @PathVariable Long userId,
+            @PathVariable Long competitionId)
+    {
+        return competitionRegistrationService.cancelRegistration(userId, competitionId);
+    }
+
+    // 在Controller类中添加以下接口
+    @PostMapping("/competitions/{competitionId}/dataset")
+    @ResponseBody
+    public ResVo<Integer> uploadCompetitionDataset(
+            @PathVariable Long competitionId,
+            @RequestParam("file") MultipartFile file) {
+        return competitionRegistrationService.uploadCompetitionDataset(competitionId);
+    }
+
 }

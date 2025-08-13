@@ -76,21 +76,80 @@ public class CompetitionRegistrationServiceImpl implements CompetitionRegistrati
             competitionMapper.incrementParticipantCount(competitionId);
             return ResVo.ok(StatusEnum.COMPETITION_REGISTRATION_SUCCESS, 1);
         } catch (BusinessException e) {
-            if (e.getMessage() == ("用户不存在")) {
+            if (e.getMessage().equals("用户不存在")) {
                 return ResVo.fail(StatusEnum.USER_NOT_FOUND);
-            } else if (e.getMessage() == ("比赛不存在")) {
+            } else if (e.getMessage().equals("比赛不存在")) {
                 return ResVo.fail(StatusEnum.COMPETITION_NOT_FOUND);
-            } else if (e.getMessage() == ("比赛未激活")) {
+            } else if (e.getMessage().equals("比赛未激活")) {
                 return ResVo.fail(StatusEnum.COMPETITION_INACTIVE);
-            } else if (e.getMessage()==("比赛尚未开始")) {
+            } else if (e.getMessage().equals("比赛尚未开始")) {
                 return ResVo.fail(StatusEnum.COMPETITION_NOT_STARTED);
-            }else if (e.getMessage()==("比赛已结束")) {
+            }else if (e.getMessage().equals("比赛已结束")) {
                 return ResVo.fail(StatusEnum.COMPETITION_ENDED);
-            }else if (e.getMessage()==("用户已报名该比赛")) {
+            }else if (e.getMessage().equals("用户已报名该比赛")) {
                 return ResVo.fail(StatusEnum.ALREADY_REGISTERED);
             }
             else
                 return ResVo.fail(StatusEnum.REGISTRATION_SYSTEM_ERROR);
         }
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public ResVo<Integer> cancelRegistration(Long userId, Long competitionId) {
+        try {
+            // 1. 验证用户存在性
+            UserDO user = userMapper.findById(userId);
+            if (user == null) {
+                throw new BusinessException("用户不存在");
+            }
+
+            // 2. 验证比赛有效性
+            CompetitionDO competition = competitionMapper.findById(competitionId);
+            if (competition == null) {
+                throw new BusinessException("比赛不存在");
+            }
+
+            // 3. 检查比赛状态（是否允许取消）
+            Date now = new Date();
+            if (now.after(competition.getStartTime())) {
+                throw new BusinessException("比赛已开始，不可取消报名");
+            }
+
+            // 4. 检查报名记录是否存在
+            UserCompetitionDO existingRegistration = userCompetitionMapper.findByUserAndCompetition(userId, competitionId);
+            if (existingRegistration == null) {
+                throw new BusinessException("未找到报名记录");
+            }
+
+            // 5. 删除报名记录
+            userCompetitionMapper.deleteById(existingRegistration.getId());
+
+            // 6. 更新比赛人数（减少）
+            competitionMapper.decrementParticipantCount(competitionId);
+
+            return ResVo.ok(StatusEnum.COMPETITION_CANCEL_SUCCESS, 1);
+        } catch (BusinessException e) {
+            // 异常类型映射
+            if (e.getMessage().equals("用户不存在")) {
+                return ResVo.fail(StatusEnum.USER_NOT_FOUND);
+            } else if (e.getMessage().equals("比赛不存在")) {
+                return ResVo.fail(StatusEnum.COMPETITION_NOT_FOUND);
+            } else if (e.getMessage().equals("比赛已开始，不可取消报名")) {
+                return ResVo.fail(StatusEnum.CANCEL_NOT_ALLOWED);
+            } else if (e.getMessage().equals("未找到报名记录")) {
+                return ResVo.fail(StatusEnum.REGISTRATION_NOT_FOUND);
+            } else {
+                return ResVo.fail(StatusEnum.CANCEL_SYSTEM_ERROR);
+            }
+        }
+    }
+
+    @Override
+    public ResVo<Integer> uploadCompetitionDataset(Long competitionId){
+        return null;
+    };
+
+
+
 }

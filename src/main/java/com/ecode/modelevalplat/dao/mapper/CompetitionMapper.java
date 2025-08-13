@@ -59,9 +59,14 @@ public interface CompetitionMapper {
     @Select("SELECT path FROM competitions WHERE id=#{competitionId}")
     String selectPath(Long competitionId);
 
-//         6. 更新比赛人数
+    //  6. 增加比赛人数
     @Update("UPDATE competitions " +
             "SET participant_count = participant_count + 1 " +
             "WHERE id = #{competitionId} ")
     int incrementParticipantCount(@Param("competitionId") Long competitionId);
+    //  7. 减少比赛人数
+    @Update("UPDATE competitions " +
+            "SET participant_count = participant_count -1" +
+            "WHERE id = #{competitionId} ")
+    int decrementParticipantCount(@Param("competitionId") Long competitionId);
 }
