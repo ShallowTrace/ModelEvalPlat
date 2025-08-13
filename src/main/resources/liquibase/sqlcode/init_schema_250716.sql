@@ -26,32 +26,31 @@ CREATE TABLE `users` (
                          PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
-<<<<<<< HEAD
 -- 比赛表
-=======
-
-
--- auto-generated definition
->>>>>>> main
-create table competitions
+CREATE TABLE competitions
 (
-    id                     bigint unsigned auto_increment comment '比赛ID'
-        primary key,
-    name                   varchar(100)                           not null comment '比赛名称',
-    description            text                                   null comment '比赛介绍',
-    start_time             datetime                               not null comment '开始时间',
-    end_time               datetime                               not null comment '结束时间',
-    path                   varchar(255)                           null comment '测试集和真实值csv路径',
-    is_active              tinyint(1)   default 1                 not null comment '是否激活',
-    participant_count      int unsigned default '0'               not null comment '报名人数',
-    daily_submission_limit int          default 5                 not null comment '每日提交次数限制',
-    created_at             datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
-    register_end_time      datetime                               not null comment '允许报名的开始时间',
-    register_start_time    datetime                               not null comment '允许报名的最晚时间',
-    constraint unique_competition_name
-        unique (name)
+    id                     BIGINT UNSIGNED AUTO_INCREMENT COMMENT '比赛ID'
+        PRIMARY KEY,
+    name                   VARCHAR(100)                           NOT NULL COMMENT '比赛名称',
+    description            TEXT                                   NULL COMMENT '比赛介绍',
+    start_time             DATETIME                               NOT NULL COMMENT '开始时间',
+    end_time               DATETIME                               NOT NULL COMMENT '结束时间',
+    path                   VARCHAR(255)                           NULL COMMENT '测试集和真实值csv路径',
+    is_active              TINYINT(1)   DEFAULT 1                 NOT NULL COMMENT '是否激活',
+    participant_count      INT UNSIGNED DEFAULT '0'               NOT NULL COMMENT '报名人数',
+    daily_submission_limit INT          DEFAULT 5                 NOT NULL COMMENT '每日提交次数限制',
+    created_at             DATETIME     DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    register_start_time    DATETIME                               NOT NULL COMMENT '允许报名的开始时间',
+    register_end_time      DATETIME                               NOT NULL COMMENT '允许报名的最晚时间',
+
+    organizer              VARCHAR(100)  NULL COMMENT '比赛主办方',
+    prize                  VARCHAR(50)   NULL COMMENT '比赛奖金',
+    competition_type       VARCHAR(50)   NULL COMMENT '比赛类型',
+
+    CONSTRAINT unique_competition_name
+        UNIQUE (name)
 )
-    comment '比赛信息表';
+    COMMENT '比赛信息表';
 
 
 

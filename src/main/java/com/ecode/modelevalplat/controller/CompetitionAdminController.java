@@ -17,12 +17,11 @@
 package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.common.ResVo;
+import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-//import com.example.demo.entity.Competition;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
 import com.ecode.modelevalplat.service.CompetitionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +39,7 @@ public class CompetitionAdminController {
     @GetMapping("/competitions")
     @ResponseBody
     public ResVo<List<CompetitionDO>> selectAllCompetition(){
-        return ResVo.ok(competitionService.selectAllCompetition());
+        return ResVo.ok(StatusEnum.COMPETITION_LIST_SUCCESS, competitionService.selectAllCompetition());
     }
 
 //     POST http://127.0.0.1:8002/api/competitions
@@ -60,7 +59,7 @@ public class CompetitionAdminController {
     @PostMapping("/competitions")
     @ResponseBody
     public ResVo<Integer> publishCompetition(@RequestBody CompetitionDO competition){
-        return ResVo.ok(competitionService.publishCompetition(competition));
+        return ResVo.ok(StatusEnum.COMPETITION_LIST_SUCCESS, competitionService.publishCompetition(competition));
     }
 
 //     DELETE http://127.0.0.1:8082/api/competitions/{competitionId}

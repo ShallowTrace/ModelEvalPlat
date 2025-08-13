@@ -75,6 +75,10 @@ public enum StatusEnum {
     //退出登陆异常
     LOGOUT_EXCEPTION(400_500_005, "退出登录异常"),
 
+    //比赛模块
+    //查询所有比赛成功
+    COMPETITION_LIST_SUCCESS(200_201_001, "查询所有比赛成功"),
+
     // 获取用户信息模块
     USER_INFO_NOT_FOUND(700_401_001, "用户信息未找到"),
     //查询用户信息成功
