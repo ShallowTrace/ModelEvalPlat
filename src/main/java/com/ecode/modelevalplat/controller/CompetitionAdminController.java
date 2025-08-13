@@ -18,17 +18,14 @@ package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.common.ResVo;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-//import com.example.demo.entity.Competition;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
 import com.ecode.modelevalplat.service.CompetitionService;
 import com.github.pagehelper.PageInfo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -60,6 +57,14 @@ public class CompetitionAdminController {
 //                "register_start_time":"2025-08-01T09:00:00",
 //                "register_end_time":"2025-08-01T09:00:00"
 //    }'
+//     GET http://127.0.0.1:8002/api/competitions/1
+    @GetMapping("/competitions/{competitionId}")
+    @ResponseBody
+    public CompetitionDO selectCompetitionById(@PathVariable Long competitionId){
+        return competitionService.selectCompetitionById(competitionId);
+    }
+
+
     @PostMapping("/competitions")
     @ResponseBody
     public ResVo<Integer> publishCompetition(@RequestBody CompetitionDO competition){
