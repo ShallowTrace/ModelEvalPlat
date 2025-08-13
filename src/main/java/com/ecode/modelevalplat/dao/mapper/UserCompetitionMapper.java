@@ -14,7 +14,7 @@ public interface UserCompetitionMapper {
 
 
     @Delete("DELETE FROM user_competitions WHERE id=#{id}")
-    void delete(Long id);
+    void deleteById(Long id);
 
     @Delete("DELETE FROM user_competitions WHERE user_id=#{userId} AND competition_id=#{competitionId}")
     void deleteByUserAndCompetition(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
@@ -33,5 +33,6 @@ public interface UserCompetitionMapper {
 
     @Select("SELECT * FROM user_competitions WHERE user_id=#{userId} AND competition_id=#{competitionId}")
     UserCompetitionDO findByUserAndCompetition(@Param("userId") Long userId, @Param("competitionId") Long competitionId);
+
 
 }
