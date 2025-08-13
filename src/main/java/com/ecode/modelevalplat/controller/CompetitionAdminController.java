@@ -17,11 +17,13 @@
 package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.common.ResVo;
-import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
+//import com.example.demo.entity.Competition;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
 import com.ecode.modelevalplat.service.CompetitionService;
+import com.github.pagehelper.PageInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,8 +40,10 @@ public class CompetitionAdminController {
     //    curl -X GET "http://127.0.0.1:8002/api/competitions"
     @GetMapping("/competitions")
     @ResponseBody
-    public ResVo<List<CompetitionDO>> selectAllCompetition(){
-        return ResVo.ok(StatusEnum.COMPETITION_LIST_SUCCESS, competitionService.selectAllCompetition());
+    public ResVo<PageInfo<CompetitionDO>> selectAllCompetition  // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
+    (@RequestParam(defaultValue = "1") int pageNum,
+    @RequestParam(defaultValue = "10") int pageSize) {
+        return ResVo.ok(competitionService.selectAllCompetition(pageNum,pageSize));
     }
 
 //     POST http://127.0.0.1:8002/api/competitions
@@ -59,7 +63,7 @@ public class CompetitionAdminController {
     @PostMapping("/competitions")
     @ResponseBody
     public ResVo<Integer> publishCompetition(@RequestBody CompetitionDO competition){
-        return ResVo.ok(StatusEnum.COMPETITION_LIST_SUCCESS, competitionService.publishCompetition(competition));
+        return ResVo.ok(competitionService.publishCompetition(competition));
     }
 
 //     DELETE http://127.0.0.1:8082/api/competitions/{competitionId}
@@ -96,9 +100,10 @@ public class CompetitionAdminController {
     }
 
     @PostMapping("/registrations/{userId}/{competitionId}")
+    @ResponseBody
 //     curl -X POST "http://127.0.0.1:8002/api/registrations/1/1"
     public ResVo<Integer> registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
     {
-        return ResVo.ok(competitionRegistrationService.registerCompetition(userId,competitionId));
+        return competitionRegistrationService.registerCompetition(userId,competitionId);
     }
 }
