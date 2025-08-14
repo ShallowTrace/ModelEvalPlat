@@ -24,6 +24,7 @@ import com.ecode.modelevalplat.service.CompetitionService;
 import com.github.pagehelper.PageInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +35,8 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 public class CompetitionAdminController {
+    @Value("${spring.cos.secretId}")
+    private String secretId;
 
     private final CompetitionService competitionService;
     private final CompetitionRegistrationService competitionRegistrationService;
@@ -44,6 +47,7 @@ public class CompetitionAdminController {
     public ResVo<PageInfo<CompetitionDO>> selectAllCompetition  // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
     (@RequestParam(defaultValue = "1") int pageNum,
     @RequestParam(defaultValue = "10") int pageSize) {
+        System.out.println(secretId);
         return ResVo.ok(competitionService.selectAllCompetition(pageNum,pageSize));
     }
 

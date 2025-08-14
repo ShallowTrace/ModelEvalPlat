@@ -115,7 +115,11 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>5.6.251</version>
+        </dependency>
         <!-- 其他 CVE 修复依赖 -->
         <dependency>
             <groupId>org.yaml</groupId>
