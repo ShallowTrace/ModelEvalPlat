@@ -82,6 +82,13 @@ spring:
     enabled: true # 当实际使用的数据库不支持liquibase，如 mariadb 时，将这个参数设置为false
     drop-first: true # 为 true 的话每次启动项目会删除所有数据库表
 
+  devtools:
+    restart:
+      enabled: true  #设置开启热部署
+      additional-paths: src/main/java #重启目录
+      exclude: WEB-INF/**
+    freemarker:
+      cache: false    #页面不加载缓存，修改即时生效
 
 resilience4j:
   circuitbreaker:
