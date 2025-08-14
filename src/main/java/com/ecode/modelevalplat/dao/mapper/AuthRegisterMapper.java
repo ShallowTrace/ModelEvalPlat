@@ -14,7 +14,6 @@ public interface AuthRegisterMapper extends BaseMapper<UserDO> {
     @Select("SELECT COUNT(1) FROM users WHERE username = #{username}")
     boolean existsByUsername(String username);
 
-
     /**
      * 判断邮箱是否存在
      */

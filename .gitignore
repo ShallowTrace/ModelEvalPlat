@@ -1,6 +1,9 @@
 /.idea/
 /target/
 .vscode/
+src/main/java/com/ecode/modelevalplat/controller/EvaluationController.java
+model.zip
+.DS_Store
 src/main/test/
 *.zip
 机器学习数据集/

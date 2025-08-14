@@ -1,13 +1,9 @@
 package com.ecode.modelevalplat.service;
 
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
 import com.github.pagehelper.PageInfo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public interface CompetitionService {
 
@@ -16,6 +12,9 @@ public interface CompetitionService {
 
     //管理员/用户 查询比赛数据集路径
     String selectPath(Long id);
+
+    //管理员/用户 查询单个比赛
+    public CompetitionDO selectCompetitionById(Long id);
 
     //管理员 新增比赛(发布比赛)
     public int publishCompetition(CompetitionDO competition);

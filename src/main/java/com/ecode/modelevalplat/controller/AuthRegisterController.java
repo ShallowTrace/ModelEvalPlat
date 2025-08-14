@@ -37,7 +37,7 @@ import javax.validation.Valid;
 //}
 // 控制器：接收前端请求并调用服务层
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthRegisterController {
 
     private final AuthRegisterService authRegisterService;
@@ -50,7 +50,7 @@ public class AuthRegisterController {
     @PostMapping("/pre-register")
     public ResVo<String> preRegister(HttpServletRequest httpServletRequest, @RequestBody @Valid AuthPreRegisterDTO authPreRegisterDTO) {
         // 调用服务层预注册方法
-        return authRegisterService.preRegister(httpServletRequest, authPreRegisterDTO.getEmail());
+        return authRegisterService.preRegister(httpServletRequest, authPreRegisterDTO);
     }
 
     @PostMapping("/complete-register")

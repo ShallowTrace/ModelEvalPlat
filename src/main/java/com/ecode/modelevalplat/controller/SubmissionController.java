@@ -3,6 +3,7 @@ package com.ecode.modelevalplat.controller;
 
 
 import com.ecode.modelevalplat.common.ResVo;
+import com.ecode.modelevalplat.context.UserContextHolder;
 import com.ecode.modelevalplat.dto.SubmissionResp;
 import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import com.ecode.modelevalplat.service.EvalService;
@@ -34,13 +35,14 @@ public class SubmissionController {
             @RequestParam(value = "dockerFile", required = false) MultipartFile dockerFile) {
 
 //        MultipartFile targetFile = submitType.equals("MODEL") ? modelFile : dockerFile;
-        // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
+        Long userId = Long.valueOf(UserContextHolder.getUserId());
+
         ResVo<SubmissionResp> resp;
         if (submitType.equals("MODEL")) {
-            resp = submissionService.submitModel(1L, competitionId, submitType, modelFile);
+            resp = submissionService.submitModel(userId, competitionId, submitType, modelFile);
         }
         else {
-            resp = submissionService.submitModel(1L, competitionId, submitType, dockerFile);
+            resp = submissionService.submitModel(userId, competitionId, submitType, dockerFile);
         }
 
         // 如果提交成功，则开始异步评测
@@ -54,11 +56,11 @@ public class SubmissionController {
     // 提交记录查询，按时间倒序
     @GetMapping("/{competitionId}/submissionhistory")
     public ResVo<PageInfo<SubmissionDO>> getSubmissions(
-            // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
             @PathVariable Long competitionId,
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize) {
-        PageInfo<SubmissionDO> submissions = submissionService.getUserSubmissions(1001L, competitionId, pageNum, pageSize);
+        Long userId = Long.valueOf(UserContextHolder.getUserId());
+        PageInfo<SubmissionDO> submissions = submissionService.getUserSubmissions(userId, competitionId, pageNum, pageSize);
         return ResVo.ok(submissions);
     }
 

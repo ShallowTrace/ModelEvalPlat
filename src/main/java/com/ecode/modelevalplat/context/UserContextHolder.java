@@ -2,33 +2,22 @@ package com.ecode.modelevalplat.context;
 
 public class UserContextHolder {
 
-    private static final ThreadLocal<UserContext> CONTEXT = new ThreadLocal<>();
+    // ThreadLocal 存放当前线程的 userId
+    private static final ThreadLocal<String> userIdHolder = new ThreadLocal<>();
 
-    public static void set(UserContext userContext) {
-        CONTEXT.set(userContext);
+    // 设置 userId
+    public static void setUserId(String userId) {
+        userIdHolder.set(userId);
     }
 
-    public static UserContext get() {
-        return CONTEXT.get();
+    // 获取 userId String
+    public static String getUserId() {
+        return userIdHolder.get();
     }
 
+    // 清理 ThreadLocal，防止内存泄漏
     public static void clear() {
-        CONTEXT.remove();
-    }
-
-    // 可选：封装获取 ID、用户名、角色的方法
-    public static Long getUserId() {
-        UserContext context = get();
-        return context != null ? context.getUserId() : null;
-    }
-
-    public static String getUsername() {
-        UserContext context = get();
-        return context != null ? context.getUsername() : null;
-    }
-
-    public static String getRole() {
-        UserContext context = get();
-        return context != null ? context.getRole() : null;
+        userIdHolder.remove();
     }
 }
+

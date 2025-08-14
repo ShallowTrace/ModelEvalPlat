@@ -16,6 +16,11 @@ public class CompetitionServiceImpl implements CompetitionService {
     @Autowired
     private CompetitionMapper competitionMapper;
 
+    //管理员/用户 查询单个比赛
+    @Override
+    public CompetitionDO selectCompetitionById(Long id){
+        return competitionMapper.findById(id);
+    }
 
     //管理员/用户 查询比赛列表
     @Override

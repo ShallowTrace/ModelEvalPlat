@@ -1,12 +1,9 @@
 package com.ecode.modelevalplat.Security;
 
-import com.ecode.modelevalplat.context.UserContext;
 import com.ecode.modelevalplat.context.UserContextHolder;
 import com.ecode.modelevalplat.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -29,36 +26,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String token = request.getHeader("Authorization");
 
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = request.getHeader("Authorization");
         if (token == null || !token.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        token = token.substring(7); // 去掉 "Bearer "
+        token = token.substring(7); // 去掉 Bearer
         try {
             Claims claims = jwtUtil.parseToken(token);
-            Long userId = claims.get("userId", Long.class);
-            String username = claims.getSubject(); // 对应 setSubject(username)
-            String role = claims.get("role", String.class);
+            String sessionToken = claims.get("sessionToken", String.class);
 
-            String redisToken = redisTemplate.opsForValue().get("sso:token:" + username);
-            if (!token.equals(redisToken)) {
-                throw new RuntimeException("Token 无效或已被替换");
+            String userId = redisTemplate.opsForValue().get("sso:token:" + sessionToken);
+            if (userId == null) {
+                throw new RuntimeException("Token 无效或已过期");
             }
 
-            // 设置用户上下文
-            UserContext userContext = new UserContext();
-            userContext.setUserId(userId);
-            userContext.setUsername(username);
-            userContext.setRole(role);
-            UserContextHolder.set(userContext);
-
-            // 构建 Spring Security 上下文认证信息（可加入角色权限）
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(username, null, null);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 绑定到 ThreadLocal，后续 Controller 可直接取 userId
+            UserContextHolder.setUserId(userId);
 
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -70,10 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } finally {
-            // 清理 ThreadLocal，防止内存泄漏
             UserContextHolder.clear();
         }
     }
+
 }
 
 

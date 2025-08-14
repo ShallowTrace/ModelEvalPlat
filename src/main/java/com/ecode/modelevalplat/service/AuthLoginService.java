@@ -9,4 +9,6 @@ public interface AuthLoginService {
     ResVo<JwtResponseDTO> loginByEmailAndPassword(AuthLoginRequestDTO1 authLoginRequestDTO1, HttpServletRequest httpRequest);
     ResVo<JwtResponseDTO> loginByEmailCode(AuthLoginRequestDTO2 authLoginRequestDTO2, HttpServletRequest httpRequest);
     ResVo<CaptchaResponseDTO> generateCaptcha(String uuid);
+
+    ResVo<Void> logout(String token);
 }
