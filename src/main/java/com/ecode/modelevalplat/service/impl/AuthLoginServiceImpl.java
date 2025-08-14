@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -149,20 +150,19 @@ public class AuthLoginServiceImpl implements AuthLoginService {
 
                 // 生成 JWT
                 JwtResponseDTO jwtResponse1 = new JwtResponseDTO();
-                jwtResponse1.setToken(jwtUtil.generateToken(userId, user.getUsername(), user.getRole()));
-                jwtResponse1.setRefreshToken(jwtUtil.generateRefreshToken(userId, user.getUsername(), user.getRole()));
-                jwtResponse1.setUserId(userId);
-                jwtResponse1.setUsername(user.getUsername());
+                String sessionToken = UUID.randomUUID().toString().replace("-", "");
+
+                jwtResponse1.setToken(jwtUtil.generateToken(sessionToken));
 
                 // 更新最后登录时间
                 authLoginMapper.updateLastLoginTime(Long.valueOf(userId));
 
                 // 单点登录缓存
-                String ssoKey = "sso:token:" + user.getUsername();
-                redisTemplate.opsForValue().set(ssoKey, jwtResponse1.getToken(), jwtProperties.getExpiration(), TimeUnit.SECONDS);
+                String redisKey = "sso:token:" + sessionToken;
+                redisTemplate.opsForValue().set(redisKey, userId, jwtProperties.getExpiration(), TimeUnit.SECONDS);
 
                 // 加入IP登录集
-                redisTemplate.opsForSet().add(ipLoginKey, String.valueOf(userId));
+                redisTemplate.opsForSet().add(ipLoginKey, userId);
                 redisTemplate.expire(ipLoginKey, jwtProperties.getExpiration(), TimeUnit.SECONDS);
 
                 return ResVo.ok(StatusEnum.LOGIN_SUCCESS, jwtResponse1);
@@ -238,20 +238,24 @@ public class AuthLoginServiceImpl implements AuthLoginService {
             try {
                 // 生成 JWT
                 JwtResponseDTO jwtResponse2 = new JwtResponseDTO();
-                jwtResponse2.setToken(jwtUtil.generateToken(userId, user.getUsername(), user.getRole()));
-                jwtResponse2.setRefreshToken(jwtUtil.generateRefreshToken(userId, user.getUsername(), user.getRole()));
-                jwtResponse2.setUserId(userId);
-                jwtResponse2.setUsername(user.getUsername());
+                String sessionToken = UUID.randomUUID().toString().replace("-", "");
+
+                jwtResponse2.setToken(jwtUtil.generateToken(sessionToken));
+//              jwtResponse2.setRefreshToken(jwtUtil.generateRefreshToken(sessionToken));
+
 
                 // 更新最后登录时间
                 authLoginMapper.updateLastLoginTime(Long.valueOf(userId));
 
                 // 单点登录缓存
-                String ssoKey = "sso:token:" + user.getUsername();
-                redisTemplate.opsForValue().set(ssoKey, jwtResponse2.getToken(), jwtProperties.getExpiration(), TimeUnit.SECONDS);
+//                String ssoKey = "sso:token:" + user.getUsername();
+//                redisTemplate.opsForValue().set(ssoKey, jwtResponse2.getToken(), jwtProperties.getExpiration(), TimeUnit.SECONDS);
+
+                String redisKey = "sso:token:" + sessionToken;
+                redisTemplate.opsForValue().set(redisKey, userId, jwtProperties.getExpiration(), TimeUnit.SECONDS);
 
                 // 加入IP登录集
-                redisTemplate.opsForSet().add(ipLoginKey, String.valueOf(userId));
+                redisTemplate.opsForSet().add(ipLoginKey, userId);
                 redisTemplate.expire(ipLoginKey, jwtProperties.getExpiration(), TimeUnit.SECONDS);
 
                 return ResVo.ok(StatusEnum.LOGIN_SUCCESS, jwtResponse2);

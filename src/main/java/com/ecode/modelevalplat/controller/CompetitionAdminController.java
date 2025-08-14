@@ -17,6 +17,7 @@
 package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.common.ResVo;
+import com.ecode.modelevalplat.context.UserContextHolder;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
 import com.ecode.modelevalplat.service.CompetitionService;
@@ -60,8 +61,8 @@ public class CompetitionAdminController {
 //     GET http://127.0.0.1:8002/api/competitions/1
     @GetMapping("/competitions/{competitionId}")
     @ResponseBody
-    public CompetitionDO selectCompetitionById(@PathVariable Long competitionId){
-        return competitionService.selectCompetitionById(competitionId);
+    public ResVo<CompetitionDO> selectCompetitionById(@PathVariable Long competitionId){
+        return ResVo.ok(competitionService.selectCompetitionById(competitionId));
     }
 
 
@@ -104,11 +105,11 @@ public class CompetitionAdminController {
         return ResVo.ok(competitionService.updateCompetitionEndTime(competitionId,endTime));
     }
 
-    @PostMapping("/registrations/{userId}/{competitionId}")
+    @PostMapping("/registrations/{competitionId}")
     @ResponseBody
 //     curl -X POST "http://127.0.0.1:8002/api/registrations/1/1"
-    public ResVo<Integer> registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
-    {
+    public ResVo<Integer> registerCompetition(@PathVariable Long competitionId) {
+        Long userId = Long.valueOf(UserContextHolder.getUserId());
         return competitionRegistrationService.registerCompetition(userId,competitionId);
     }
 }

@@ -1,38 +1,35 @@
 package com.ecode.modelevalplat.service.impl;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ecode.modelevalplat.common.enums.EvalStatusEnum;
-
-import java.io.*;
-import java.nio.file.*;
-
-
 import com.ecode.modelevalplat.common.exception.DockerException;
-import com.ecode.modelevalplat.common.exception.PythonExecuteException;
+import com.ecode.modelevalplat.dao.entity.EvaluationResultDO;
+import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import com.ecode.modelevalplat.dao.mapper.CompetitionMapper;
+import com.ecode.modelevalplat.dao.mapper.EvaluationResultMapper;
 import com.ecode.modelevalplat.dao.mapper.SubmissionMapper;
 import com.ecode.modelevalplat.service.EvalDockerService;
 import com.ecode.modelevalplat.service.EvalP2DService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ecode.modelevalplat.dao.entity.SubmissionDO;
 import com.ecode.modelevalplat.service.EvalService;
-import com.ecode.modelevalplat.dao.mapper.EvaluationResultMapper;
-import com.ecode.modelevalplat.dao.entity.EvaluationResultDO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
+import java.io.*;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvException;
-import org.springframework.util.FileSystemUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -218,7 +215,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
 
         // 构建Docker镜像
         ProcessBuilder dockerBuildProcess = new ProcessBuilder(
-                "docker", "build", "--quiet", "-t", "model-evaluator-" + submissionId, "."
+                "docker", "buildx", "build", "--platform", "linux/amd64", "-t", "model-evaluator-" + submissionId, "."
         );
         // docker build --quiet -t model-evaluator .
         dockerBuildProcess.directory(new File(targetDir.toString()));
@@ -227,14 +224,14 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         ProcessBuilder dockeRunProcess;
         if ("cuda".equals(hardwareType)) { // 根据比赛配置判断是否需要GPU
             dockeRunProcess = new ProcessBuilder(
-                    "docker", "run", "--quiet", "--rm", "--gpus", "all",
+                    "docker", "run", "--platform linux/amd64", "--rm", "--gpus", "all",
                     "-v", datasetPath + ":/app/data:ro",
                     "-v", resultDir + ":/app/prediction_result",
                     "model-evaluator-" + submissionId
             );
         } else {
             dockeRunProcess = new ProcessBuilder(
-                    "docker", "run", "--rm",
+                    "docker", "run", "--rm", "--platform", "linux/amd64",
                     "-v", datasetPath + ":/app/data:ro",
                     "-v", resultDir + ":/app/prediction_result",
                     "model-evaluator-" + submissionId
@@ -252,7 +249,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
     private void executeProcessWithLogging(ProcessBuilder processBuilder, String processName)
             throws IOException, InterruptedException {
 
-//        processBuilder.redirectErrorStream(true);
+        processBuilder.redirectErrorStream(true);
 
         int exitCode = -1;
         BufferedReader errorReader = null;
@@ -260,7 +257,7 @@ public class EvalServiceImpl extends ServiceImpl<EvaluationResultMapper, Evaluat
         try {
             process = processBuilder.start();
             // 后台读取错误流，不可返回到前端
-            errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
+            errorReader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
             String errorLine;
             while ((errorLine = errorReader.readLine()) != null) {
                 log.error("{} 输出: {}", processName, errorLine);

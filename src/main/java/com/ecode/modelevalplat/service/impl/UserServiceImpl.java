@@ -5,7 +5,6 @@ import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dao.entity.UserDO;
 import com.ecode.modelevalplat.dao.mapper.UserMapper;
 import com.ecode.modelevalplat.dto.UserFieldUpdateDTO;
-import com.ecode.modelevalplat.dto.UserQueryDTO;
 import com.ecode.modelevalplat.dto.UserResponseDTO;
 import com.ecode.modelevalplat.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +24,14 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
-    public ResVo<UserResponseDTO> getUserById(UserQueryDTO userQueryDTO) {
-        System.out.println(userQueryDTO.getId());
-        UserDO userDO = userMapper.findById(Long.valueOf(userQueryDTO.getId()));
+    public ResVo<UserResponseDTO> getUserById(String userId) {
+
+        UserDO userDO = userMapper.findById(Long.valueOf(userId));
         if (userDO == null) {
             return ResVo.fail(StatusEnum.USER_INFO_NOT_FOUND);
         }
         UserResponseDTO userResponseDTO = new UserResponseDTO();
-        userResponseDTO.setId(userDO.getId());
+        userResponseDTO.setId(userDO.getId().toString());
         userResponseDTO.setUsername(userDO.getUsername());
         userResponseDTO.setEmail(userDO.getEmail());
         userResponseDTO.setRole(userDO.getRole());
