@@ -280,7 +280,8 @@ public class EvalP2DServiceImpl implements EvalP2DService {
     private static void addEntryPoint(EnvironmentConfig config, List<String> lines) {
         lines.add("# 设置启动命令");
 //        lines.add("CMD [\"sh\", \"-c\", \"python\", \"code/predict.py\", \"--testdataset_path\", \"${DATA_DIR:-/app/data}\"]");
-        lines.add("CMD [\"sh\", \"-c\", \"python code/predict.py --testdataset_path data\"]");
+//        lines.add("CMD [\"sh\", \"-c\", \"pwd;ls -R\"]");
+        lines.add("CMD [\"sh\", \"-c\", \"pwd;ls -R;python code/predict.py --testdataset_path data\"]");
     }
 
     // 配置类

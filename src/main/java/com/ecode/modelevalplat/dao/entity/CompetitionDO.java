@@ -48,4 +48,12 @@ public class CompetitionDO {
     @JsonProperty("register_end_time")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+8")
     private Date registerEndTime;
+
+    // 新增字段
+    private String organizer; // 比赛主办方
+
+    private String prize; // 比赛奖金
+
+    @JsonProperty("competition_type")
+    private String competitionType; // 比赛类型
 }

@@ -5,7 +5,7 @@ import com.ecode.modelevalplat.common.enums.StatusEnum;
 import com.ecode.modelevalplat.dao.entity.UserDO;
 import com.ecode.modelevalplat.dao.mapper.AuthRegisterMapper;
 import com.ecode.modelevalplat.dto.AuthCompleteRegisterDTO;
-import com.ecode.modelevalplat.kafka.producer.MailProducer;
+import com.ecode.modelevalplat.dto.AuthPreRegisterDTO;
 import com.ecode.modelevalplat.service.AuthRegisterService;
 import com.ecode.modelevalplat.util.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -32,9 +32,7 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
 
     private final AuthRegisterMapper authRegisterMapper;
     private final StringRedisTemplate redisTemplate;
-    private final MailProducer mailProducer;
     private final RedisDistributedLock redisDistributedLock;
-    private final MetricsUtil metricsUtil;
     private final IpRateLimiterUtil ipRateLimiterUtil;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -54,14 +52,25 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
     @Override
     @CircuitBreaker(name = "preRegister", fallbackMethod = "preRegisterFallback")
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
-    public ResVo<String> preRegister(HttpServletRequest httpServletRequest, String email) {
+    public ResVo<String> preRegister(HttpServletRequest httpServletRequest, AuthPreRegisterDTO authPreRegisterDTO) {
+        String email = authPreRegisterDTO.getEmail();
+        String verifyCode = authPreRegisterDTO.getVerifyCode();
+
         try{
             if (!EmailUtils.isValid(email)) {
                 return ResVo.fail(StatusEnum.INVALID_EMAIL_FORMAT);
             }
 
-            if (authRegisterMapper.existsByEmail(email) == null) {
-                return ResVo.fail(StatusEnum.EMAIL_ALREADY_EXISTS);
+            UserDO user_01 = authRegisterMapper.existsByEmail(email);
+            if (user_01 != null) {
+                if (Boolean.TRUE.equals(user_01.getIsActive())) {
+                    // 用户已存在且已激活，返回错误
+                    return ResVo.fail(StatusEnum.EMAIL_ALREADY_EXISTS);
+                } else {
+                    // 用户存在但未激活，删除该用户
+                    authRegisterMapper.deleteById(user_01.getId());
+                    // 这里可以继续执行后续预注册逻辑
+                }
             }
 
             //IP限流
@@ -72,20 +81,31 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
                 return ResVo.fail(StatusEnum.TOO_MANY_USERS_LOGGED_IN_FROM_IP);
             }
 
+            String redisKey = "verify_code:" + email;
+            String cachedCode = redisTemplate.opsForValue().get(redisKey);
+            if (cachedCode == null) {
+                return ResVo.fail(StatusEnum.VERIFY_CODE_EXPIRED);
+            }
+            if (!cachedCode.equals(verifyCode)) {
+                return ResVo.fail(StatusEnum.VERIFY_CODE_INCORRECT); // 验证码不正确
+            }
+
             String lockKey = DISTRIBUTED_LOCK_PREFIX  + email;
             String lockValue = redisDistributedLock.acquireLock(lockKey, LOCK_EXPIRE_TIME);
             if (lockValue == null) {
                 return ResVo.fail(StatusEnum.SYSTEM_BUSY);
             }
 
-            UserDO user = new UserDO();
-            user.setEmail(email);
-            user.setRole("user");
-            user.setIsActive(false);// 设置为未激活状态
-            user.setCreatedAt(LocalDateTime.now());
+            UserDO user_02 = new UserDO();
+            user_02.setEmail(email);
+            user_02.setUsername(email + "_UNSET"); // 邮箱+UNSET，保证唯一
+            user_02.setPassword("UNSET");          // 预注册密码设为UNSET，正式注册时修改
+            user_02.setRole("user");
+            user_02.setIsActive(false);            // 设置为未激活状态
+            user_02.setCreatedAt(LocalDateTime.now());
 
             try {
-                authRegisterMapper.insert(user);
+                authRegisterMapper.insert(user_02);
                 redisDistributedLock.releaseLock(lockKey, lockValue);
                 return ResVo.ok(StatusEnum.REGISTER_SUCCESS);
             }
@@ -99,8 +119,8 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
         }
     }
 
-    public ResVo<String> preRegisterFallback(HttpServletRequest httpServletRequest, String email, Throwable ex) {
-        log.warn("preRegister 降级触发，email: {}, 异常: {}", email, ex.toString());
+    public ResVo<String> preRegisterFallback(HttpServletRequest httpServletRequest, AuthPreRegisterDTO authPreRegisterDTO, Throwable ex) {
+        log.warn("preRegister 降级触发，email: {}, 异常: {}", authPreRegisterDTO.getEmail(), ex.toString());
         return ResVo.fail(StatusEnum.SYSTEM_ABNORMALITY); // 可自定义枚举或使用通用错误码
     }
 
@@ -135,6 +155,7 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
 
             // 2. 图形验证码校验
             String storedCode = redisTemplate.opsForValue().get("captcha:" + uuid);
+
             if (storedCode == null || !storedCode.equalsIgnoreCase(dynamicCode)) {
                 return ResVo.fail(StatusEnum.DYNAMIC_CODE_INVALID);
             }
@@ -148,21 +169,21 @@ public class AuthRegisterServiceImpl implements AuthRegisterService {
             // 4. 判断邮箱账号是否已存在
             UserDO existingUser = authRegisterMapper.existsByEmail(email);
             String hashedPassword = passwordEncoder.encode(password);
-            if (existingUser != null) {
+
+
+            if (existingUser != null && !Boolean.TRUE.equals(existingUser.getIsActive())) {
                 // 已存在用户 → 更新用户名、密码
                 existingUser.setUsername(username);
                 existingUser.setPassword(hashedPassword);
                 existingUser.setCreatedAt(LocalDateTime.now());
+                existingUser.setIsActive(true);
+                existingUser.setAvatarUrl(AvatarGeneratorUtil.getRandomAvatarUrl());
                 authRegisterMapper.updateById(existingUser);
-            } else {
-                // 不存在 → 新建用户
-                UserDO newUser = new UserDO();
-                newUser.setEmail(email);
-                newUser.setUsername(username);
-                newUser.setPassword(hashedPassword);
-                newUser.setRole("user"); // 默认角色
-                newUser.setCreatedAt(LocalDateTime.now());
-                authRegisterMapper.insert(newUser);
+            } else if(existingUser != null && existingUser.getIsActive()){
+                return ResVo.fail(StatusEnum.EMAIL_ALREADY_EXISTS);
+            }
+            else{
+                return ResVo.fail(StatusEnum.REGISTER_FAILED);
             }
 
             return ResVo.ok(StatusEnum.REGISTER_SUCCESS, "注册成功");

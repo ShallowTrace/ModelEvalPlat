@@ -17,8 +17,8 @@
 package com.ecode.modelevalplat.controller;
 
 import com.ecode.modelevalplat.common.ResVo;
+import com.ecode.modelevalplat.context.UserContextHolder;
 import com.ecode.modelevalplat.dao.entity.CompetitionDO;
-//import com.example.demo.entity.Competition;
 import com.ecode.modelevalplat.service.CompetitionRegistrationService;
 import com.ecode.modelevalplat.service.CompetitionService;
 import com.github.pagehelper.PageInfo;
@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -79,6 +78,14 @@ public class CompetitionAdminController {
 //                "register_start_time":"2025-08-01T09:00:00",
 //                "register_end_time":"2025-08-01T09:00:00"
 //    }'
+//     GET http://127.0.0.1:8002/api/competitions/1
+    @GetMapping("/competitions/{competitionId}")
+    @ResponseBody
+    public ResVo<CompetitionDO> selectCompetitionById(@PathVariable Long competitionId){
+        return ResVo.ok(competitionService.selectCompetitionById(competitionId));
+    }
+
+
     @PostMapping("/competitions")
     @ResponseBody
     public ResVo<Integer> publishCompetition(@RequestBody CompetitionDO competition){
@@ -118,11 +125,11 @@ public class CompetitionAdminController {
         return ResVo.ok(competitionService.updateCompetitionEndTime(competitionId,endTime));
     }
 
-    @PostMapping("/registrations/{userId}/{competitionId}")
+    @PostMapping("/registrations/{competitionId}")
     @ResponseBody
 //     curl -X POST "http://127.0.0.1:8002/api/registrations/1/1"
-    public ResVo<Integer> registerCompetition(@PathVariable Long userId, @PathVariable Long competitionId)
-    {
+    public ResVo<Integer> registerCompetition(@PathVariable Long competitionId) {
+        Long userId = Long.valueOf(UserContextHolder.getUserId());
         return competitionRegistrationService.registerCompetition(userId,competitionId);
     }
 

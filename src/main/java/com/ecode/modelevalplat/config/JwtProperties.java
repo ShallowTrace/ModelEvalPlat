@@ -22,5 +22,5 @@ public class JwtProperties {
     /**
      * refresh token 有效时间（单位：秒）
      */
-    private long refreshExpiration;
+//    private long refreshExpiration;
 }
