@@ -138,9 +138,11 @@ public enum StatusEnum {
 
     CANCEL_NOT_ALLOWED(700_500_008, "比赛已开始，不可取消报名"),
     REGISTRATION_NOT_FOUND(700_500_009, "未找到报名记录"),
-    CANCEL_SYSTEM_ERROR(700_500_010, "报名系统异常");
+    CANCEL_SYSTEM_ERROR(700_500_010, "报名系统异常"),
 
-
+//写1000开头的
+    FILE_UPLOAD_SUCCESS(1000_200_001,"文件上传成功"),
+    FILE_UPLOAD_FAIL(1000_500_001,"文件上传失败");
     private final int code;
 
     private final String msg;

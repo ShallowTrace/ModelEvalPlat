@@ -4,7 +4,7 @@
 src/main/java/com/ecode/modelevalplat/controller/EvaluationController.java
 model.zip
 .DS_Store
-src/main/test/
+src/test
 *.zip
 机器学习数据集/
 生成数据集工具代码/

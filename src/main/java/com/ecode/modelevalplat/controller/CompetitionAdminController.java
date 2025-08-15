@@ -34,18 +34,6 @@ import java.time.LocalDateTime;
 @Controller
 @RequiredArgsConstructor
 public class CompetitionAdminController {
-    @Value("${spring.cos.secretId}")
-    private String secretId;
-
-    @Value("${SECRET_KEY}")
-    private String secretKey;
-
-    @Value("${Region}")
-    private String Region;
-
-    @Value("${Bucket_Name}")
-    private String Bucket_Name;
-
     private final CompetitionService competitionService;
     private final CompetitionRegistrationService competitionRegistrationService;
 //     GET http://127.0.0.1:8002/api/competitions
@@ -55,12 +43,6 @@ public class CompetitionAdminController {
     public ResVo<PageInfo<CompetitionDO>> selectAllCompetition  // TODO 鉴权，这里的userId是写死的，后期要改成类似从token中获取的方案
     (@RequestParam(defaultValue = "1") int pageNum,
     @RequestParam(defaultValue = "10") int pageSize) {
-        System.out.println(secretId);
-        System.out.println(secretKey);
-        System.out.println(Region);
-        System.out.println(Bucket_Name);
-        System.out.println("hello");
-
         return ResVo.ok(competitionService.selectAllCompetition(pageNum,pageSize));
     }
 
@@ -149,7 +131,7 @@ public class CompetitionAdminController {
     public ResVo<Integer> uploadCompetitionDataset(
             @PathVariable Long competitionId,
             @RequestParam("file") MultipartFile file) {
-        return competitionRegistrationService.uploadCompetitionDataset(competitionId);
+        return competitionRegistrationService.uploadCompetitionDataset(competitionId,file);
     }
 
 }
